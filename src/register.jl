@@ -50,13 +50,17 @@ function update()
 end
 
 function add_data(file::String, F::POP.Model)
-    datapath = local_data_path()
+    datapath = update_data()
     datafile = joinpath(datapath,"pop", file*".json")
-    POP.save(datafile,F)
-    git(`-C $datapath add $datafile `)
-    git(`-C $datapath commit -am "add $file" `)
-    git(`-C $datapath push origin master`)
-    @info "POP add data file \"pop/"*file*".json\""
+    if !isfile(datafile)
+        POP.save(datafile,F)
+        git(`-C $datapath add $datafile `)
+        git(`-C $datapath commit -a -m "add $file.json" `)
+        git(`-C $datapath push origin master`)
+        @info "POP add data file \"pop/"*file*".json\""
+    else
+        @warn "POP data file \"pop/"*file*".json\" already exists"
+    end
     return file*".json", datapath
 end
 
@@ -64,7 +68,7 @@ function rm_data(file::String)
     datapath = local_data_path()
     datafile = joinpath(datapath,"pop", file*".json")
     git(`-C $datapath rm $datafile`) 
-    git(`-C $datapath commit -am "rm $file"`) 
+    git(`-C $datapath commit -a -m "rm $file"`) 
     git(`-C $datapath push origin master`) 
     @info "POP remove data file \"pop/"*file*".json\""
     return nothing
@@ -89,20 +93,19 @@ function register(F::POP.Model; file="", url::String="", doc::String="")
         datafile = file
     end
     if url==""
-        update_data()
-        #POP.add_data(datafile,F)
+        add_data(datafile,F)
         dataurl = joinpath(POP.RAW_DATA_URL, datafile*".json")
     else
         dataurl = joinpath(url,datafile*".json")
     end
-    update_registry()
+    registpath= update_registry()
     docurl=doc
 
     add_registry([string(u), dataurl, docurl] )
     add_registry([string(u), POP.properties(F)...], "PolynomialOptimizationProblems")
     
-    #git(`-C $registpath commit -am "add to index pop/$file"`) 
-    #git(`-C $registpath push origin master`) 
+    git(`-C $registpath commit -a -m "add to index pop/$file"`) 
+    git(`-C $registpath push origin master`) 
     @info "POP register data "*datafile
     return u, datafile 
 end
