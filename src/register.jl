@@ -101,7 +101,7 @@ function register(F::POP.Model; file="", url::String="", doc::String="")
     registpath= update_registry()
     docurl=doc
 
-    add_registry([string(u), dataurl, docurl] )
+    add_registry([string(u), F["name"], dataurl, docurl] )
     add_registry([string(u), POP.properties(F)...], "PolynomialOptimizationProblems")
     
     git(`-C $registpath commit -a -m "add to index pop/$file"`) 

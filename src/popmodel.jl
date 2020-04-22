@@ -16,7 +16,7 @@ function Base.setindex!(p::POP.Model, v, k::String)  p.pop[k] = v end
 function Base.setindex!(p::POP.Model, v, k::Symbol)  p.pop[string(k)] = v end
 
 function Base.getindex(p::POP.Model, s::String)
-    get(p.pop, s, nothing)
+    get(p.pop, s, "")
 end
 
 function Base.getindex(p::POP.Model, s::Symbol)
@@ -108,19 +108,11 @@ end
 pop(P::Vector, X) = POP.Model(P,X)
 
 function constraints(F::POP.Model)
-    if getkey(F.pop,"constraints",0) != 0
-        return F["constraints"]
-    else
-        return []
-    end
+    return getkey(F.pop,"constraints",[])
 end
 
 function objective(F::POP.Model)
-    if getkey(F.pop,"objective",0) != 0
-        return F["objective"]
-    else
-        return nothing
-    end
+    return getkey(F.pop,"objective",nothing)
 end
 
 
@@ -129,7 +121,7 @@ function properties(P::POP.Model)
     no = 0;
     dgo = -1
 
-    if P["objective"] != nothing
+    if P[:objective] != nothing
         no = 1
         dgo = maxdegree(P["objective"][1])
     end
@@ -137,7 +129,7 @@ function properties(P::POP.Model)
     dgz=-1
     ns=0
     dgs=-1
-    if P["constraints"] != nothing
+    if P[:constraints] != nothing
         for c in P["constraints"]
             if c[2]=="=0"
                 nz+=1
@@ -149,15 +141,15 @@ function properties(P::POP.Model)
         end
     end
     name = P["name"]
-    return [nv, no, dgo, nz, dgz, ns, dgs, name]
+    return [name, nv, no, dgo, nz, dgz, ns, dgs]
 end
 
 function Base.vec(F::POP.Model)
-    if F["objective"] == nothing 
+    if F[:objective] == nothing 
         return [(c.pol, c.set.val) for c in F["constraints"]]
     end
     P = [(F["objective"].pol, F["objective"].set.val)]
-    if F["constraints"] != nothing 
+    if F[:constraints] != nothing 
         for c in F["constraints"]
             push!(P, (c[1],c[2].val))
         end
