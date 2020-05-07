@@ -9,7 +9,7 @@ export pop, constraints, objective
  Polynomial Optimization Problem, as an ordered dictionnary.
 """
 mutable struct Model 
-    pop::DataStructures.OrderedDict{String,Any}
+    pop::OrderedDict{String,Any}
 end
 
 function Base.setindex!(p::POP.Model, v, k::String)  p.pop[k] = v end
@@ -91,12 +91,12 @@ function Model(P::Vector, X)
 
     F = OrderedDict{String,Any}("variables" => [string(x) for x in X])
 
-    C = Any[]
+    C = POP.Constraint[]
     for p in P
         if p[2]=="inf" || p[2] =="sup"
-            F["objective"] =  constraint(Polynomial(p[1]),p[2],X)
+            F["objective"] =  constraint(p[1],p[2],X)
         else
-            push!(C, constraint(Polynomial(p[1]),p[2],X))
+            push!(C, constraint(p[1],p[2],X))
         end
     end
     if length(C)>0
@@ -156,3 +156,4 @@ function Base.vec(F::POP.Model)
     end
     return P
 end
+
