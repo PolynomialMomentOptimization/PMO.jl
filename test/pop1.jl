@@ -12,8 +12,9 @@ g2 = x
 h = 2*y^2-y
 
 
-F  = POP.Model([(o,"inf"), (g,"<=0"), (g2, [-1,1]), (h,"=0")], X)
+F  = POP.pop([(o,"inf"), (g,"<=0"), (g2-1, ">=0"), (h,"=0")], X)
 
 POP.json(F)
 POP.save("tmp.json",F)
-G  = POP.read("tmp.json")
+G  = POP.readfile("tmp.json")
+POP.json(G)

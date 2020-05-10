@@ -1,4 +1,6 @@
-function format_polynomial(p,X)
+using SparseArrays
+
+function read_polynomial(p,X)
     pol = 0 
     for tm in p["polynomial"]["terms"]
         m = tm[1]
@@ -16,10 +18,10 @@ function format_polynomial(p,X)
     return  POP.Constraint(pol,POP.Set(p["set"]),X)
 end
 
-function format_moments(p,X)
+function read_moments(p,X,nu)
     c = p["moments"]["terms"][1][1]*one(Polynomial{true,Int64})
-    
-    pol = fill(zero(c), p["moments"]["nu"])
+    pol = fill(zero(c), nu)
+
     s = p["set"]
     for tm in p["moments"]["terms"]
         m = tm[1]
@@ -42,39 +44,91 @@ function format_moments(p,X)
     return  POP.Constraint(pol,POP.Set(s),X)
 end
 
-function format(p,X)
-    if haskey(p,"polynomial")
-        return format_polynomial(p,X)
+function read_constraint(p,X,nu=1)
+    if typeof(p) <: Vector
+        return p;
+    elseif haskey(p,"polynomial")
+        return read_polynomial(p,X)
     elseif haskey(p,"moments")
-        return format_moments(p,X)
+        return read_moments(p,X,nu)
+    else
+        return p
     end
 end
 
-function format(F::OrderedDict)
-    C = Any[]
-    X = [PolyVar{true}(x) for x in F["pop"]["variables"]]
-    for p in F["pop"]["constraints"]
-        push!(C,POP.format(p,X))
+function read_sdp(C, nvar::Int64)
+    LMI = Any[]
+    for i in 1:length(C["msizes"])
+        push!(LMI,[spzeros(C["msizes"][i],C["msizes"][i]) for k in 1:nvar+1])
     end
-    F["pop"]["constraints"] = C
-    if getkey(F["pop"], "objective", false) != false
-        F["pop"]["objective"]   = POP.format(F["pop"]["objective"],X)
+    for t in C["lmi_mat"]
+        l = t[2]
+        nv = (t[3] == 0 ? nvar+1 : t[3])
+        i = t[4]
+        j = t[5]
+        LMI[l][nv][i,j] = t[1]
+        if i != j LMI[l][nv][j,i] = t[1] end
     end
-    F["variables"]   = [string(x) for x in X]
-    return POP.Model(F["pop"])
+
+    LSI = Any[]
+    for i in 1:C["nlsi"]
+        push!(LSI, spzeros(nvar+1))
+    end
+    for t in C["lsi_mat"]
+        l = t[2]
+        nv = (t[3] == 0 ? nvar+1 : t[3])
+        LSI[l][nv] = t[1]
+    end
+    return SDP_Constraint([LMI,LSI],Set(C["lsi_op"]), nvar);
+end
+
+function read_var(P)
+    if haskey(P,"variables")
+        return [PolyVar{true}(x) for x in P["variables"]]
+    elseif haskey(P,"nvar")
+        return (@polyvar x[1:P["nvar"]])[1]
+    end
+end
+
+function read_data(P::OrderedDict)
+    for (name,F) in P
+        
+        nu = (haskey(F,"nmus") ? F["nmus"] : 1)
+
+        X = read_var(F)
+        F["variables"]   = [string(x) for x in X]
+
+        nvar = F["nvar"]
+        if haskey(F, "objective")
+            F["objective"]   = POP.read_constraint(F["objective"],X,nu)
+        end
+
+        if haskey(F,"constraints")
+            if typeof(F["constraints"])<: Vector
+                C = Any[]
+                for p in F["constraints"]
+                    push!(C,POP.read_constraint(p,X,nu))
+                end
+                F["constraints"] = C
+            else
+                F["constraints"] = read_sdp(F["constraints"],nvar)
+            end
+        end
+        return POP.Model(F, name)
+    end
 end
 
 function parse(s::String)
     F = JSON.parse(s; dicttype=DataStructures.OrderedDict)
-    POP.format(F)
+    POP.read_data(F)
 end
 
-function read(file::String)
+function readfile(file::String)
     F = JSON.parsefile(file; dicttype=DataStructures.OrderedDict)
-    POP.format(F)
+    POP.read_data(F)
 end
 
-function url(url::String)
+function readurl(url::String)
     p = HTTP.get(url)
     POP.parse(String(p.body))
 end
