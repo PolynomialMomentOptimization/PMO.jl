@@ -97,7 +97,7 @@ function model(P::Vector, X, typ::String)
     F = OrderedDict{String,Any}("variables" => [string(x) for x in X])
     
     F["nvar"] = length(X)
-    if typ=="mom"
+    if typ=="mom" && length(P)>0
         F["nmus"] = length(P[1][1])
     end
     C = POP.Constraint[]
@@ -117,8 +117,24 @@ end
 
 pop(P::Vector, X) = model(P,X,"pop")
 
+function pop(P...)
+    X = PolyVar{true}[]
+    for p in P
+        X = union(X, variables(p[1]))
+    end
+    model([P...],X,"pop")
+end
+    
 mom(P::Vector, X) = model(P, X, "mom")
 
+function mom(P...)
+    X = PolyVar{true}[]
+    for p in P
+        X = union(X, variables(p[1]))
+    end
+    model([P...], X, "mom")
+end
+    
 function sdp_size(V::Vector)
     maximum(length.(size.(V)))
 end

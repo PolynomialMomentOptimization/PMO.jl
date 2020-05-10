@@ -12,7 +12,10 @@ g2 = x
 h = 2*y^2-y
 
 
-F  = POP.pop([(o,"inf"), (g,"<=0"), (g2-1, ">=0"), (h,"=0")], X)
+F  = POP.pop((o,"inf"),
+             (g,"<=0"),
+             (g2-1, ">=0"),
+             (h,"=0"))
 
 POP.json(F)
 POP.save("tmp.json",F)
