@@ -53,7 +53,7 @@ function add_data(file::String, F::PMOData)
     datapath = update_data()
     datafile = joinpath(datapath,"pmo", file*".json")
     if !isfile(datafile)
-        PMOsave(datafile,F)
+        PMO.save(datafile,F)
         git(`-C $datapath add $datafile `)
         git(`-C $datapath commit -a -m "add $file.json" `)
         git(`-C $datapath push origin master`)
@@ -74,7 +74,7 @@ function rm_data(file::String)
     return nothing
 end
 
-function add_registry(V::Vector, name::String="index-data")
+function add_registry(V::Vector, name::String="index-pmo")
     registpath = local_registry_path()
     regist_io  = open(joinpath(registpath,"csv",name*".csv"),"a")
     print(regist_io,V[1])
@@ -102,7 +102,7 @@ function register(F::PMOData; file="", url::String="", doc::String="")
     docurl=doc
 
     add_registry([string(u), F["name"], dataurl, docurl] )
-    add_registry([string(u), PMO_properties(F)...], "PolynomialOptimizationProblems")
+    #add_registry([string(u), PMO.properties(F)...], "PolynomialOptimizationProblems")
     
     git(`-C $registpath commit -a -m "add to index pmo/$file"`) 
     git(`-C $registpath push origin master`) 
@@ -111,7 +111,7 @@ function register(F::PMOData; file="", url::String="", doc::String="")
 end
 
 
-function gettable(name::String="index-data")
+function gettable(name::String="index-pmo")
     JuliaDB.loadtable(joinpath(local_registry_path(),"csv", name*".csv"))
 end
 
