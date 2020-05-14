@@ -146,22 +146,23 @@ function JSON.lower(c::SDPCstr)
 end
 
 
-function JSON.lower(m::PMOModel)
-    return m.model
+function JSON.lower(m::PMOData)
+    return m.data
 end
-function PMOjson(io::IO, F::PMOModel)
+
+function JSON.json(io::IO, F::PMOData)
     s = replace(JSON.json(F,2), "\"["=>"[")
     s = replace(s,"]\""=>"]")
     print(io,s)
 end
 
-function PMOjson(F::PMOModel)
-    PMOjson(stdout,F)
+function JSON.print(F::PMOData)
+    JSON.json(stdout,F)
 end
 
-function PMOsave(file::String, F::PMOModel)
+function save(file::String, F::PMOData)
     fd = open(file,"w")
-    PMOjson(fd,F)
+    JSON.json(fd,F)
     close(fd)
 end
 

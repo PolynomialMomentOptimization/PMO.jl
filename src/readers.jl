@@ -143,10 +143,10 @@ function read_data(F::OrderedDict)
         F["constraints"] = read_constraint(F["type"],
                                            F["constraints"], X, nu)
     end
-    return PMOModel(F)
+    return PMOData(F)
 end
 
-function PMOparse(s::String)
+function parse(s::String)
     F = JSON.parse(s; dicttype=DataStructures.OrderedDict)
     read_data(F)
 end

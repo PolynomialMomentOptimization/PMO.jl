@@ -49,7 +49,7 @@ function update()
     end
 end
 
-function add_data(file::String, F::PMOModel)
+function add_data(file::String, F::PMOData)
     datapath = update_data()
     datafile = joinpath(datapath,"pmo", file*".json")
     if !isfile(datafile)
@@ -85,7 +85,7 @@ function add_registry(V::Vector, name::String="index-data")
     close(regist_io)
 end
 
-function register(F::PMOModel; file="", url::String="", doc::String="")
+function register(F::PMOData; file="", url::String="", doc::String="")
     u = uuid1()
     if file == ""
         datafile = string(u)

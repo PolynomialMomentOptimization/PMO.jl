@@ -1,11 +1,11 @@
-# POP.jl
+# PMO.jl
 
 
-Julia package for parsing, writing Polynomial Optimization Problems, reading and updating the DataBase.
+Julia package for parsing, writing Polynomial and Moment Optimization Problems, reading and updating the DataBase.
 
 ## Installation
 
 ```julia
-Ctr-] add https://github.com/PolynomialOptimization/POP.jl
+] add https://github.com/PolynomialMomentOptimization/PMO.jl
 ```
 

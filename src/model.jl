@@ -3,44 +3,29 @@ using DataStructures
 
 import Base: setindex!, getindex, show
 
-export pmo, mom, sdp, constraints, objective
+export pmo_pol, pmo_moment, pmo_sdp, constraints, objective, doc
 
 """
- Optimization Problem as an ordered dictionnary.
+ Polynomial Moment Optimization Data as an ordered dictionnary.
 """
-mutable struct PMOModel 
-    model::OrderedDict{String,Any}
+mutable struct PMOData
+    data::OrderedDict{String,Any}
 end
 
-function PMOModel(F,s) PMOModel(F) end
+function PMOData(F,s) PMOData(F) end
 
-function Base.setindex!(p::PMOModel, v, k::String)  p.model[k] = v end
-function Base.setindex!(p::PMOModel, v, k::Symbol)  p.model[string(k)] = v end
-function Base.getindex(p::PMOModel, s::String)  get(p.model, s, "") end
-function Base.getindex(p::PMOModel, s::Symbol)  get(p.model, string(s), nothing) end
+function Base.setindex!(p::PMOData, v, k::String)  p.data[k] = v end
+function Base.setindex!(p::PMOData, v, k::Symbol)  p.data[string(k)] = v end
+function Base.getindex(p::PMOData, s::String)  get(p.data, s, "") end
+function Base.getindex(p::PMOData, s::Symbol)  get(p.data, string(s), nothing) end
 
-function Base.show(io::IO,p::PMOModel)
+function Base.show(io::IO,p::PMOData)
     println(io,"Optimisation model:")
-    for (k,v) in p.model
+    for (k,v) in p.data
         println(io,"  ",k, " => ",v)
     end
     return io
 end
-
-# """
-#  Set for the range of the polynomial values
-# """
-# mutable struct PMOSet
-#     val::Any
-# end
-
-# function Base.show(io::IO,s::PMOSet)
-#     if typeof(s.val)==String
-#         print(io,'"',s.val,'"')
-#     else
-#         print(io,s.val)
-#     end
-# end
 
 """
  Polynomial constraint as a polynomial, a set and the variables
@@ -83,8 +68,9 @@ mutable struct MomentObj{T}
     set::String
     var::Any
 end
+
 """
- Polynomial constraint as a polynomial, a set and the variables
+ SDP  constraint.
 """
 mutable struct SDPCstr{T}
     cstr::Vector{T}
@@ -98,12 +84,13 @@ end
 function objective(f, s, X)
     return PolynomialObj(f,s,X)
 end
+
 function objective(V::Vector, s, X)
     return MomentObj(V,s,X)
 end
 
 """
-Construct a Polynomial Optimization Problem  from
+Construct a Polynomial Moment Optimization data  from
 
     - P vector of objective function or constraints (p, s) with p a polynomial and s a set
     - X variables of the polynomials.
@@ -112,9 +99,9 @@ Example:
 --------
 
     X = @polyvar x y
-    model([(x^2*y^2+x*y, "inf"), (x^2+y^2-1,"<=0")], X)
+    data([(x^2*y^2+x*y, "inf"), (x^2+y^2-1,"<=0")], X)
 """
-function model(P::Vector, X, type::String)
+function pmodata(P::Vector, X, type::String)
 
     F = OrderedDict{String,Any}(
         "type"=> type,
@@ -141,35 +128,35 @@ function model(P::Vector, X, type::String)
     end
     F["version"]="0.0.1"
     F["uuid"]= string(uuid1())
-    return PMOModel(F)
+    return PMOData(F)
 end
 
 
-pmo(P::Vector, X) = model(P,X,"polynomial")
+pmo_pol(P::Vector, X) = pmodata(P,X,"polynomial")
 
-function pmo(P...)
+function pmo_pol(P...)
     X = PolyVar{true}[]
     for p in P
         X = union(X, variables(p[1]))
     end
-    model([P...],X,"polynomial")
+    pmodata([P...],X,"polynomial")
 end
     
-mom(P::Vector, X) = model(P, X, "moment")
+pmo_moment(P::Vector, X) = pmodata(P, X, "moment")
 
-function mom(P...)
+function pmo_moment(P...)
     X = PolyVar{true}[]
     for p in P
         X = union(X, variables(p[1]))
     end
-    model([P...], X, "moment")
+    pmodata([P...], X, "moment")
 end
     
 function sdp_size(V::Vector)
     maximum(length.(size.(V)))
 end
 
-function sdp(P...)
+function pmo_sdp(P...)
 
     F = OrderedDict{String,Any}("type" => "sdp")
 
@@ -204,23 +191,23 @@ function sdp(P...)
     F["constraints"] = SDPCstr([LMI,LSI,LSO], n)
     F["version"] = "0.0.1"
     F["uuid"]= string(uuid1())
-    return PMOModel(F)
+    return PMOData(F)
 end
 
-function sdp(P::Vector)
-    return sdp(P...)
+function pmo_sdp(P::Vector)
+    return pmo_sdp(P...)
 end
         
-function constraints(F::PMOModel)
+function constraints(F::PMOData)
     return getkey(F.pmo,"constraints",[])
 end
 
-function objective(F::PMOModel)
+function objective(F::PMOData)
     return getkey(F.pmo,"objective",nothing)
 end
 
 
-function properties(P::PMOModel)
+function properties(P::PMOData)
     nv = length(P["variables"])
     no = 0;
     dgo = -1
@@ -248,7 +235,7 @@ function properties(P::PMOModel)
     return [name, nv, no, dgo, nz, dgz, ns, dgs]
 end
 
-function Base.vec(F::PMOModel)
+function Base.vec(F::PMOData)
     if F[:objective] == nothing 
         return [(c.ctr, c.set.val) for c in F["constraints"]]
     end
@@ -261,8 +248,6 @@ function Base.vec(F::PMOModel)
     return P
 end
 
-function PMOdoc(P::PMOModel)
-    if haskey(P.model,"doc")
-        println(P["doc"])
-    end
+function doc(P::PMOData)
+    return P["doc"]
 end
