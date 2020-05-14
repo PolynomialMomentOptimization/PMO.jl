@@ -1,6 +1,6 @@
 using DynamicPolynomials, JSON
-include("../src/POP.jl")
-#using POP
+include("../src/PMO.jl")
+#using PMO
 
 X = @polyvar x y
 
@@ -12,12 +12,76 @@ g2 = x
 h = 2*y^2-y
 
 
-F  = POP.pop((o,"inf"),
+F  = pop((o,"inf"),
              (g,"<=0"),
              (g2-1, ">=0"),
              (h,"=0"))
 
-POP.json(F)
-POP.save("tmp.json",F)
-G  = POP.readfile("tmp.json")
-POP.json(G)
+F["doc"]=
+"""
+This is a documentation text.
+Several lines 
+  - We have this
+  - We have that
+
+"""
+PMOjson(F)
+PMOsave("tmp.json",F)
+G  = readfile("tmp.json")
+PMOjson(G)
+
+
+o1 = x^2*y^2+x^4-y^3
+o2 = x*y
+
+g1  = x^2 + Float64(pi)*y^2 -2
+g2 = x
+
+h1 = 2*y^2-y
+h2 = x^2+y*2.1*x*y
+
+F  = mom(([o1,o2],"inf"),
+             ([g1,0],">=0"),
+             ([0,g2], ">=0"),
+             ([h1, h2], "=0 *")
+             )
+
+PMOjson(F)
+PMOsave("tmp.json",F)
+G  = readfile("tmp.json")
+PMOjson(G)
+
+
+using LinearAlgebra
+
+M11 = Symmetric([2 -1 0; 0 2 0; 0 0 2])
+M13 = Symmetric([2 0 -1; 0 2 0; 0 0 2])
+M21 = [1 0; 0 -1]
+M22 = [0 3; 3 0 ]
+M20 = [0 -1; -1 2]
+
+F  = sdp(([1,2,3], "inf"),
+         ([M11, 0, M13],">=0"),
+         ([M21, M22, 0, M20],">=0"),
+         ([1.1,2,0,-4], "=0"),
+         ([0,-1.2,3,-1],"<=0"),
+         )
+F["name"] = "example0"
+F["doc"] =
+    """
+    This is an example for testing purposes.
+    Nothing special.
+    """
+F["keywords"] =
+    """
+    #moment
+    #optimization
+    #polynomial
+    #matrix
+
+    """
+PMOjson(F)
+PMOsave("tmp.json",F)
+G  = readfile("tmp.json")
+PMOjson(G)
+

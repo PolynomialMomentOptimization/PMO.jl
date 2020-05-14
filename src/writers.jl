@@ -1,18 +1,11 @@
-function JSON.lower(s::POP.Set)
-    if typeof(s.val)==String
-        s.val
-    else
-        json(s.val)
-    end
-end
-
-function json_terms(pol, set, X)
+#----------------------------------------------------------------------
+function json_polynomial_terms(pol::Polynomial, X)
     terms = String[]
     for t in pol
         V = Int64[]
         E = Int64[]
         for i in 1:length(X)
-            d = degree(t,X[i])
+            d = maxdegree(t,X[i])
             if d!= 0
                 push!(V,i)
                 push!(E,d)
@@ -28,12 +21,37 @@ function json_terms(pol, set, X)
     return terms
 end
 
-function json_terms(P::Vector, set, X)
-    terms = String[]
-    if typeof(set.val)<:Vector
-        tm = Any[set.val[1],0]
-        push!(terms, JSON.json(tm))
+#----------------------------------------------------------------------
+function JSON.lower(C::PolynomialCstr)
+    R = Any[]
+    for c in C.cstr
+        M = OrderedDict{String,Any}()
+        M["set"] = c[2]
+        pol=c[1]
+        M["polynomial"] = OrderedDict(
+            "coeftype" => string(eltype(pol.a)),
+            "terms" => json_polynomial_terms(pol, C.var)
+        )
+        push!(R,M)
     end
+    return R
+end
+
+#----------------------------------------------------------------------
+function JSON.lower(c::PolynomialObj)
+    M = OrderedDict{String,Any}()
+    M["set"] = c.set
+    pol=c.obj
+    M["polynomial"] = OrderedDict(
+        "coeftype" => string(eltype(pol.a)),
+        "terms" => json_polynomial_terms(pol, c.var)
+    )
+    return M
+end
+
+#----------------------------------------------------------------------
+function json_moment_terms(P::Vector, X)
+    terms = String[]
     for i in 1:length(P)
         if P[i] != 0
             for t in P[i]
@@ -59,46 +77,40 @@ function json_terms(P::Vector, set, X)
     return terms
 end
 
-function JSON.lower(c::POP.Constraint)
-
-    pol = c.ctr*one(Polynomial{true,Int64})
-    M = OrderedDict{String,Any}()
-    if typeof(c.set.val)<:Vector
-        M["set"] = c.set.val[2]
-        M["type"] = "mass" 
-    elseif c.set.val=="inf" || c.set.val=="sup" 
-        M["set"] = c.set.val
-        M["type"] = "mass" 
-    else
-        M["set"] = c.set.val
-    end
-
-    if typeof(c.ctr) <: Vector
-
-        #assert length(pol) != 0
+   
+function JSON.lower(C::MomentCstr)
+    R = Any[]
+    for c in C.cstr
+        M = OrderedDict{String,Any}()
+        M["set"] = c[2]
+        pol=c[1]
         M["moments"] = OrderedDict(
             "coeftype" => string(eltype(pol[1].a)),
-            "terms" => json_terms(pol, c.set, c.var)
+            "terms" => json_moment_terms(pol, C.var)
         )
-
-    else
-
-        M["polynomial"] = OrderedDict(
-            "coeftype" => string(eltype(pol.a)),
-            "terms" => json_terms(pol, c.set, c.var)
-        )
+        push!(R,M)
     end
-    
-    return M
+    return R
 end
 
-function JSON.lower(c::POP.SDP_Constraint)
+function JSON.lower(c::MomentObj)
+    M = OrderedDict{String,Any}()
+    M["set"] = c.set
+    pol=c.obj
+    M["moments"] = OrderedDict(
+        "coeftype" => string(eltype(pol[1].a)),
+        "terms" => json_moment_terms(pol, c.var)
+    )
+    return M
+end
+#----------------------------------------------------------------------
+function JSON.lower(c::SDPCstr)
     M = OrderedDict{String,Any}()
 
     LMI = String[]
     LDM = Int64[]
-    for l in 1:length(c.ctr[1])
-        V = c.ctr[1][l]
+    for l in 1:length(c.cstr[1])
+        V = c.cstr[1][l]
         push!(LDM, size(V[1],1))
         for k in 1:length(V)
             kv = ( k> c.nvar  ? 0 : k)
@@ -117,7 +129,7 @@ function JSON.lower(c::POP.SDP_Constraint)
     M["lmi_mat"] = LMI
 
     LSI = String[]
-    csi = c.ctr[2]
+    csi = c.cstr[2]
     for i in 1:length(csi)
         for j in 1:length(csi[i])
             nv = ( j> c.nvar  ? 0 : j)
@@ -126,30 +138,30 @@ function JSON.lower(c::POP.SDP_Constraint)
             end
         end
     end
-    M["nlsi"]    = length(c.set.val)
+    M["nlsi"]    = length(c.cstr[3])
     M["lsi_mat"] = LSI
-    M["lsi_op"] = c.set
+    M["lsi_op"] = c.cstr[3]
 
     return M
 end
 
 
-function JSON.lower(m::POP.Model)
-    return OrderedDict(  m.type => m.prog )
+function JSON.lower(m::PMOModel)
+    return m.model
 end
-function POP.json(io::IO, F::POP.Model)
+function PMOjson(io::IO, F::PMOModel)
     s = replace(JSON.json(F,2), "\"["=>"[")
     s = replace(s,"]\""=>"]")
     print(io,s)
 end
 
-function POP.json(F::POP.Model)
-    POP.json(stdout,F)
+function PMOjson(F::PMOModel)
+    PMOjson(stdout,F)
 end
 
-function POP.save(file::String, F::POP.Model)
+function PMOsave(file::String, F::PMOModel)
     fd = open(file,"w")
-    POP.json(fd,F)
+    PMOjson(fd,F)
     close(fd)
 end
 

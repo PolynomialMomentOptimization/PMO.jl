@@ -1,6 +1,6 @@
 using DynamicPolynomials
-include("../src/POP.jl")
-#using POP
+include("../src/PMO.jl")
+#using PMO
 
 X = @polyvar x y
 
@@ -13,13 +13,13 @@ g2 = x
 h1 = 2*y^2-y
 h2 = x^2+y*2.1*x*y
 
-F  = POP.mom(([o1,o2],"inf"),
+F  = PMO.mom(([o1,o2],"inf"),
              ([g1,0],">=0"),
              ([0,g2],">=0"),
              ([h1, h2],[1.,"=0"])
              )
 
-POP.json(F)
-POP.save("tmp.json",F)
-G  = POP.readfile("tmp.json")
-POP.json(G)
+PMO.json(F)
+PMO.save("tmp.json",F)
+G  = PMO.readfile("tmp.json")
+PMO.json(G)

@@ -8,21 +8,21 @@ function git(cmd)
 end
 
 function local_data_path()
-    return joinpath(homedir(), ".julia", "POP/data")
+    return joinpath(homedir(), ".julia", "PMO/data")
 end
 
 function local_registry_path()
-    return joinpath(homedir(), ".julia", "POP/registries")
+    return joinpath(homedir(), ".julia", "PMO/registries")
 end
 
 function update_data()
     datapath=local_data_path()
     if !ispath(datapath)
-        LibGit2.clone(POP.GIT_DATA_URL,local_data_path())
-        @info "POP clone "*POP.GIT_DATA_URL
+        LibGit2.clone(PMO_GIT_DATA_URL,local_data_path())
+        @info "PMO clone "*PMO_GIT_DATA_URL
     else
         git(`-C $datapath pull`) 
-        @info "POP update data"
+        @info "PMO update data"
     end
     return datapath
 end
@@ -30,11 +30,11 @@ end
 function update_registry()
     registpath=local_registry_path()
     if !ispath(registpath)
-        LibGit2.clone(POP.GIT_REGISTRY_URL,local_registry_path())
-        @info "POP clone "*POP.GIT_REGISTRY_URL
+        LibGit2.clone(PMO_GIT_REGISTRY_URL,local_registry_path())
+        @info "PMO clone "*PMO_GIT_REGISTRY_URL
     else
         git(`-C $registpath pull`) 
-        @info "POP update registries"
+        @info "PMO update registries"
     end
     return registpath
 end
@@ -45,36 +45,36 @@ function update()
     datapath = local_data_path()
     if ispath(datapath)
         git(`-C $datapath pull`) 
-        @info "POP update data"
+        @info "PMO update data"
     end
 end
 
-function add_data(file::String, F::POP.Model)
+function add_data(file::String, F::PMOModel)
     datapath = update_data()
-    datafile = joinpath(datapath,"pop", file*".json")
+    datafile = joinpath(datapath,"pmo", file*".json")
     if !isfile(datafile)
-        POP.save(datafile,F)
+        PMOsave(datafile,F)
         git(`-C $datapath add $datafile `)
         git(`-C $datapath commit -a -m "add $file.json" `)
         git(`-C $datapath push origin master`)
-        @info "POP add data file \"pop/"*file*".json\""
+        @info "PMO add data file \"pmo/"*file*".json\""
     else
-        @warn "POP data file \"pop/"*file*".json\" already exists"
+        @warn "PMO data file \"pmo/"*file*".json\" already exists"
     end
     return file*".json", datapath
 end
 
 function rm_data(file::String)
     datapath = local_data_path()
-    datafile = joinpath(datapath,"pop", file*".json")
+    datafile = joinpath(datapath,"pmo", file*".json")
     git(`-C $datapath rm $datafile`) 
     git(`-C $datapath commit -a -m "rm $file"`) 
     git(`-C $datapath push origin master`) 
-    @info "POP remove data file \"pop/"*file*".json\""
+    @info "PMO remove data file \"pmo/"*file*".json\""
     return nothing
 end
 
-function add_registry(V::Vector, name::String="index-pop")
+function add_registry(V::Vector, name::String="index-data")
     registpath = local_registry_path()
     regist_io  = open(joinpath(registpath,"csv",name*".csv"),"a")
     print(regist_io,V[1])
@@ -85,7 +85,7 @@ function add_registry(V::Vector, name::String="index-pop")
     close(regist_io)
 end
 
-function register(F::POP.Model; file="", url::String="", doc::String="")
+function register(F::PMOModel; file="", url::String="", doc::String="")
     u = uuid1()
     if file == ""
         datafile = string(u)
@@ -94,7 +94,7 @@ function register(F::POP.Model; file="", url::String="", doc::String="")
     end
     if url==""
         add_data(datafile,F)
-        dataurl = joinpath(POP.RAW_DATA_URL, datafile*".json")
+        dataurl = joinpath(PMO_RAW_DATA_URL, datafile*".json")
     else
         dataurl = joinpath(url,datafile*".json")
     end
@@ -102,16 +102,20 @@ function register(F::POP.Model; file="", url::String="", doc::String="")
     docurl=doc
 
     add_registry([string(u), F["name"], dataurl, docurl] )
-    add_registry([string(u), POP.properties(F)...], "PolynomialOptimizationProblems")
+    add_registry([string(u), PMO_properties(F)...], "PolynomialOptimizationProblems")
     
-    git(`-C $registpath commit -a -m "add to index pop/$file"`) 
+    git(`-C $registpath commit -a -m "add to index pmo/$file"`) 
     git(`-C $registpath push origin master`) 
-    @info "POP register data "*datafile
+    @info "PMO register data "*datafile
     return u, datafile 
 end
 
 
-function gettable(name::String="index-pop")
+function gettable(name::String="index-data")
     JuliaDB.loadtable(joinpath(local_registry_path(),"csv", name*".csv"))
 end
 
+function read_uuid(uuid, t)
+    url = filter(x-> x.uuid==uuid,t)[1][:url]
+    readurl(url)
+end
