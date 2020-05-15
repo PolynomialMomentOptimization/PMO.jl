@@ -132,26 +132,29 @@ function pmodata(P::Vector, X, type::String)
 end
 
 
-pmo_pol(P::Vector, X) = pmodata(P,X,"polynomial")
+polynomial(P::Vector, X) = pmodata(P,X,"polynomial")
 
-function pmo_pol(P...)
+function polynomial(P...)
     X = PolyVar{true}[]
     for p in P
         X = union(X, variables(p[1]))
     end
     pmodata([P...],X,"polynomial")
 end
-    
-pmo_moment(P::Vector, X) = pmodata(P, X, "moment")
 
-function pmo_moment(P...)
+pmo_pol= polynomial
+        
+moment(P::Vector, X) = pmodata(P, X, "moment")
+
+function moment(P...)
     X = PolyVar{true}[]
     for p in P
         X = union(X, variables(p[1]))
     end
     pmodata([P...], X, "moment")
 end
-    
+
+pmo_moment = moment
 function sdp_size(V::Vector)
     maximum(length.(size.(V)))
 end

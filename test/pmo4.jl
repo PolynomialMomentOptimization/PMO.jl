@@ -4,13 +4,13 @@ include("../src/PMO.jl")
 
 using LinearAlgebra
 
-VM = [Symmetric([2 1 0; 0 1 0; 0 0 0]),
-      Symmetric([0 0 0; 0 1 1; 0 0 1]),
-      [[0,0,1]],
-      -Symmetric([0 0 0; 0 0 1; 0 0 0])]
+LMI1 = [Symmetric([2 1 0; 0 1 0; 0 0 0]),
+        Symmetric([0 0 0; 0 1 1; 0 0 1]),
+        [[0,0,1]],
+        -Symmetric([0 0 0; 0 0 1; 0 0 0])]
 
 F  = PMO.sdp(([0,0,1], "inf"),
-             (VM, ">=0"),
+             (LMI1, ">=0"),
              ([1, 1, 0 , -1], "=0"),
              ([1, 0, 0 ], ">=0"),
              ([0, 1, 0 ], ">=0")
