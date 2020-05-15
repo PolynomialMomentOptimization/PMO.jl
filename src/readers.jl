@@ -69,27 +69,54 @@ end
 function read_sdp_cstr(C, nvar::Int64)
     LMI = Any[]
     for i in 1:length(C["msizes"])
-        push!(LMI,[spzeros(C["msizes"][i],C["msizes"][i]) for k in 1:nvar+1])
+        push!(LMI,Any[spzeros(C["msizes"][i],C["msizes"][i]) for k in 1:nvar+1])
     end
-    for t in C["lmi_mat"]
-        l = t[2]
-        nv = (t[3] == 0 ? nvar+1 : t[3])
-        i = t[4]
-        j = t[5]
-        LMI[l][nv][i,j] = t[1]
-        if i != j LMI[l][nv][j,i] = t[1] end
+    if haskey(C,"lmi_symat")
+        for t in C["lmi_symat"]
+            l = t[2]
+            nv = (t[3] == 0 ? nvar+1 : t[3])
+            i = t[4]
+            j = t[5]
+            LMI[l][nv][i,j] = t[1]
+            if i != j LMI[l][nv][j,i] = t[1] end
+        end
     end
-
+    if haskey(C,"lmi_lrmat")
+        rk = Dict{Vector{Int64},Int64}()
+        for t in C["lmi_lrmat"]
+            l = t[2]
+            nv = (t[3] == 0 ? nvar+1 : t[3])
+            r = t[4]
+            rk[[l,nv]] = max(r, get(rk,[l,nv],0))
+        end
+        for (idx,r) in rk
+            l = idx[1]
+            k = idx[2]
+            LMI[l][k] = [spzeros(C["msizes"][l]) for i in 1:r]
+        end
+        for t in C["lmi_lrmat"]
+            l = t[2]
+            nv = (t[3] == 0 ? nvar+1 : t[3])
+            i = t[4]
+            j = t[5]
+            LMI[l][nv][i][j] = t[1]
+        end
+    end
+    
     LSI = Any[]
-    for i in 1:C["nlsi"]
-        push!(LSI, spzeros(nvar+1))
+    LSO = Any[]
+    if haskey(C, "nlsi")
+        for i in 1:C["nlsi"]
+            push!(LSI, spzeros(nvar+1))
+        end
+        for t in C["lsi_mat"]
+            l = t[2]
+            nv = (t[3] == 0 ? nvar+1 : t[3])
+            LSI[l][nv] = t[1]
+        end
+        LSO = C["lsi_op"]
     end
-    for t in C["lsi_mat"]
-        l = t[2]
-        nv = (t[3] == 0 ? nvar+1 : t[3])
-        LSI[l][nv] = t[1]
-    end
-    return SDPCstr([LMI,LSI,C["lsi_op"]], nvar);
+    return SDPCstr([LMI,LSI,LSO], nvar);
 end
 
 

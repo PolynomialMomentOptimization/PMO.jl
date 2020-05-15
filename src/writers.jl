@@ -107,26 +107,42 @@ end
 function JSON.lower(c::SDPCstr)
     M = OrderedDict{String,Any}()
 
-    LMI = String[]
-    LDM = Int64[]
+    LMISY = String[]
+    LMILR = String[]
+    LDM   = Int64[]
     for l in 1:length(c.cstr[1])
         V = c.cstr[1][l]
         push!(LDM, size(V[1],1))
         for k in 1:length(V)
             kv = ( k> c.nvar  ? 0 : k)
             if length(size(V[k])) == 2
-                for i in size(V[k],1)
+                for i in 1:size(V[k],1)
                     for j in 1:i
                         if V[k][i,j] != 0
-                            push!(LMI, json(Any[ V[k][i,j], l, kv, i, j]))
+                            push!(LMISY, json(Any[ V[k][i,j], l, kv, i, j]))
+                        end
+                    end
+                end
+            else
+                for i in 1:length(V[k])
+                    for j in 1:length(V[k][i])
+                        if V[k][i][j] != 0
+                            push!(LMILR, json(Any[ V[k][i][j], l, kv, i, j]))
                         end
                     end
                 end
             end
         end
     end
+
+    M["nlmi"] = length(LDM)
     M["msizes"] = json(LDM)
-    M["lmi_mat"] = LMI
+    if length(LMISY) != 0
+        M["lmi_symat"] = LMISY
+    end
+    if length(LMILR) != 0
+        M["lmi_lrmat"] = LMILR
+    end
 
     LSI = String[]
     csi = c.cstr[2]
@@ -138,10 +154,11 @@ function JSON.lower(c::SDPCstr)
             end
         end
     end
-    M["nlsi"]    = length(c.cstr[3])
-    M["lsi_mat"] = LSI
-    M["lsi_op"] = c.cstr[3]
-
+    if length(LSI) != 0
+        M["nlsi"]    = length(c.cstr[3])
+        M["lsi_mat"] = LSI
+        M["lsi_op"] = json(c.cstr[3])
+    end
     return M
 end
 

@@ -156,7 +156,8 @@ function sdp_size(V::Vector)
     maximum(length.(size.(V)))
 end
 
-function pmo_sdp(P...)
+        
+function sdp(P...)
 
     F = OrderedDict{String,Any}("type" => "sdp")
 
@@ -194,9 +195,11 @@ function pmo_sdp(P...)
     return PMOData(F)
 end
 
-function pmo_sdp(P::Vector)
+function sdp(P::Vector)
     return pmo_sdp(P...)
 end
+
+pmo_sdp = sdp
         
 function constraints(F::PMOData)
     return getkey(F.pmo,"constraints",[])
