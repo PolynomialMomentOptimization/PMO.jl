@@ -19,7 +19,7 @@ function Base.setindex!(p::PMOData, v, k::Symbol)  p.data[string(k)] = v end
 function Base.getindex(p::PMOData, s::String)  get(p.data, s, "") end
 function Base.getindex(p::PMOData, s::Symbol)  get(p.data, string(s), nothing) end
 
-function Base.show(io::IO,p::PMOData)
+function Base.show(io::IO, p::PMOData)
     println(io,"Optimisation model:")
     for (k,v) in p.data
         println(io,"  ",k, " => ",v)

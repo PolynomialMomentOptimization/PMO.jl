@@ -177,6 +177,11 @@ function JSON.print(F::PMOData)
     JSON.json(stdout,F)
 end
 
+function PMO.print(F::PMOData)
+    JSON.json(stdout,F)
+end
+                
+
 function save(file::String, F::PMOData)
     fd = open(file,"w")
     JSON.json(fd,F)
