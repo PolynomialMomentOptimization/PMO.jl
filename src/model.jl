@@ -82,6 +82,8 @@ end
 mutable struct SDPCstr{T}
     cstr::Vector{T}
     nvar::Int64
+    dual_lr ::Any
+    dual_rk ::Any
 end
 
 function Base.push!(C::SDPCstr, p, s)
@@ -212,11 +214,11 @@ end
 pmo_sdp = sdp
         
 function constraints(F::PMOData)
-    return getkey(F.pmo,"constraints",[])
+    return getkey(F.data,"constraints",[])
 end
 
 function objective(F::PMOData)
-    return getkey(F.pmo,"objective",nothing)
+    return getkey(F.data,"objective",nothing)
 end
 
 

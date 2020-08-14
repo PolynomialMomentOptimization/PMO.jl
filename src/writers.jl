@@ -171,6 +171,13 @@ function JSON.lower(c::SDPCstr)
         M["lsi_vec"] = json(LSI_vec)
         M["lsi_op"] = json(c.cstr[3])
     end
+
+    if length(c.dual_lr) != 0
+        M["lmiduallr"] = json(c.dual_lr)
+    end
+    if length(c.dual_rk) != 0
+        M["lmidualrank"] = json(c.dual_rk)
+    end
     return M
 end
 

@@ -118,7 +118,11 @@ function read_sdp_cstr(C, nvar::Int64)
 
         LSO = C["lsi_op"]
     end
-    return SDPCstr([LMI,LSI,LSO], nvar);
+    
+    lmiduallr   = ( haskey(C, "lmiduallr") ? C["lmiduallr"] : Int64[] ) 
+    lmidualrank = ( haskey(C, "lmidualrank") ? C["lmidualrank"] : Int64[] )
+    
+    return SDPCstr([LMI,LSI,LSO], nvar, lmiduallr, lmidualrank);
 end
 
 
