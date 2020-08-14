@@ -70,7 +70,14 @@ mutable struct MomentObj{T}
 end
 
 """
- SDP  constraint.
+ SDP  objective
+"""
+mutable struct SDPObj{T}
+    obj::Vector{T}
+end
+
+"""
+ SDP  constraints
 """
 mutable struct SDPCstr{T}
     cstr::Vector{T}

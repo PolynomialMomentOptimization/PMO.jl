@@ -68,17 +68,17 @@ end
 
 function read_sdp_cstr(C, nvar::Int64)
     LMI = Any[]
-    for i in 1:length(C["msizes"])
+    for i in 1:C["nlmi"]
         push!(LMI,Any[spzeros(C["msizes"][i],C["msizes"][i]) for k in 1:nvar+1])
     end
     if haskey(C,"lmi_symat")
         for t in C["lmi_symat"]
-            l = t[2]
-            nv = (t[3] == 0 ? nvar+1 : t[3])
+            k = (t[2] == 0 ? nvar+1 : t[2])
+            l = t[3]
             i = t[4]
             j = t[5]
-            LMI[l][nv][i,j] = t[1]
-            if i != j LMI[l][nv][j,i] = t[1] end
+            LMI[l][k][i,j] = t[1]
+            if i != j LMI[l][k][j,i] = t[1] end
         end
     end
     if haskey(C,"lmi_lrmat")
@@ -106,14 +106,16 @@ function read_sdp_cstr(C, nvar::Int64)
     LSI = Any[]
     LSO = Any[]
     if haskey(C, "nlsi")
-        for i in 1:C["nlsi"]
-            push!(LSI, spzeros(nvar+1))
-        end
+        LSI=spzeros(C["nlsi"],nvar+1)
         for t in C["lsi_mat"]
-            l = t[2]
-            nv = (t[3] == 0 ? nvar+1 : t[3])
-            LSI[l][nv] = t[1]
+            i = t[2]
+            j = t[3]
+            LSI[i,j] = t[1]
         end
+        for k in 1:C["nlsi"]
+            LSI[k,nvar+1] = - C["lsi_vec"][k]
+        end
+
         LSO = C["lsi_op"]
     end
     return SDPCstr([LMI,LSI,LSO], nvar);
@@ -141,7 +143,7 @@ function read_moment_obj(O,X,nu)
 end
 
 function read_sdp_obj(O, nvar::Int64)
-    O
+    SDPObj(O)
 end
         
 function read_objective(type::String,C,X,nu)
@@ -185,6 +187,7 @@ end
 
 function readurl(url::String)
     p = HTTP.get(url)
-    PMOparse(String(p.body))
+    F = JSON.parse(String(p.body); dicttype=DataStructures.OrderedDict)
+    PMOData(F)
 end
 

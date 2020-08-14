@@ -104,6 +104,10 @@ function JSON.lower(c::MomentObj)
     return M
 end
 #----------------------------------------------------------------------
+function JSON.lower(o::SDPObj)
+    return json(o.obj)
+end
+
 function JSON.lower(c::SDPCstr)
     M = OrderedDict{String,Any}()
 
@@ -119,7 +123,7 @@ function JSON.lower(c::SDPCstr)
                 for i in 1:size(V[k],1)
                     for j in 1:i
                         if V[k][i,j] != 0
-                            push!(LMISY, json(Any[ V[k][i,j], l, kv, i, j]))
+                            push!(LMISY, json(Any[ V[k][i,j], kv, l, i, j]))
                         end
                     end
                 end
@@ -127,7 +131,7 @@ function JSON.lower(c::SDPCstr)
                 for i in 1:length(V[k])
                     for j in 1:length(V[k][i])
                         if V[k][i][j] != 0
-                            push!(LMILR, json(Any[ V[k][i][j], l, kv, i, j]))
+                            push!(LMILR, json(Any[ V[k][i][j], kv, l, i, j]))
                         end
                     end
                 end
@@ -144,19 +148,27 @@ function JSON.lower(c::SDPCstr)
         M["lmi_lrmat"] = LMILR
     end
 
-    LSI = String[]
+
     csi = c.cstr[2]
-    for i in 1:length(csi)
-        for j in 1:length(csi[i])
-            nv = ( j> c.nvar  ? 0 : j)
-            if csi[i][j] != 0
-                push!(LSI, json(Any[csi[i][j], i, nv]))
+    LSI_mat = String[]
+    LSI_vec = zeros(size(csi,1))
+    
+    for i in 1:size(csi,1)
+        for j in 1:size(csi,2)
+            #k = ( j> c.nvar  ? 0 : j)
+            if csi[i,j] != 0
+                if j > c.nvar
+                    LSI_vec[i] = csi[i,j]
+                else 
+                    push!(LSI_mat, json(Any[csi[i,j], i, j]))
+                end
             end
         end
     end
-    if length(LSI) != 0
+    if length(LSI_mat) != 0
         M["nlsi"]    = length(c.cstr[3])
-        M["lsi_mat"] = LSI
+        M["lsi_mat"] = LSI_mat
+        M["lsi_vec"] = json(LSI_vec)
         M["lsi_op"] = json(c.cstr[3])
     end
     return M
@@ -177,8 +189,10 @@ function JSON.print(F::PMOData)
     JSON.json(stdout,F)
 end
 
-function PMO.print(F::PMOData)
-    JSON.json(stdout,F)
+function JSON.print(file::String, F::PMOData)
+    file_io  = open(file,"w")
+    JSON.json(file_io,F)
+    close(file_io)
 end
                 
 
