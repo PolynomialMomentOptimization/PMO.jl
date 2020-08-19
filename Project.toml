@@ -5,4 +5,9 @@ version = "0.1.0"
 
 [deps]
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
+DynamicPolynomials = "7c1d4256-1411-5781-91ec-d7bc3513ac07"
+HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
+JuliaDB = "a93385a2-3734-596a-9a66-3cfbb77141e6"
+LibGit2 = "76f85450-5226-5b5a-8eaa-529ad045b433"
+UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
