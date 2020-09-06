@@ -114,7 +114,7 @@ function pmodata(P::Vector, X, type::String)
 
     F = OrderedDict{String,Any}(
         "type"=> type,
-        "variables" => [string(x) for x in X]
+        "variables" => [replace(replace(string(x),"]"=>""),"["=>"") for x in X]
     )
     
     F["nvar"] = length(X)
