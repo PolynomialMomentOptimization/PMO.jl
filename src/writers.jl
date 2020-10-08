@@ -160,7 +160,7 @@ function JSON.lower(c::SDPCstr)
                 if j > c.nvar
                     LSI_vec[i] = csi[i,j]
                 else 
-                    push!(LSI_mat, json(Any[csi[i,j], i, j]))
+                    push!(LSI_mat, json(Any[csi[i,j], j, i]))
                 end
             end
         end
@@ -182,28 +182,28 @@ function JSON.lower(c::SDPCstr)
 end
 
 
-function JSON.lower(m::PMOData)
+function JSON.lower(m::PMO.Data)
     return m.data
 end
 
-function JSON.json(io::IO, F::PMOData)
+function JSON.json(io::IO, F::PMO.Data)
     s = replace(JSON.json(F,2), "\"["=>"[")
     s = replace(s,"]\""=>"]")
     print(io,s)
 end
 
-function JSON.print(F::PMOData)
+function JSON.print(F::PMO.Data)
     JSON.json(stdout,F)
 end
 
-function JSON.print(file::String, F::PMOData)
+function JSON.print(file::String, F::PMO.Data)
     file_io  = open(file,"w")
     JSON.json(file_io,F)
     close(file_io)
 end
                 
 
-function save(file::String, F::PMOData)
+function save(file::String, F::PMO.Data)
     fd = open(file,"w")
     JSON.json(fd,F)
     close(fd)

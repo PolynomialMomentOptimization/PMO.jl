@@ -68,8 +68,12 @@ end
 
 function read_sdp_cstr(C, nvar::Int64)
     LMI = Any[]
-    for i in 1:C["nlmi"]
-        push!(LMI,Any[spzeros(C["msizes"][i],C["msizes"][i]) for k in 1:nvar+1])
+    if C["nlmi"]== 1
+        push!(LMI,Any[spzeros(C["msizes"],C["msizes"]) for k in 1:nvar+1])
+    else
+        for i in 1:C["nlmi"]
+            push!(LMI,Any[spzeros(C["msizes"][i],C["msizes"][i]) for k in 1:nvar+1])
+        end
     end
     if haskey(C,"lmi_symat")
         for t in C["lmi_symat"]
@@ -106,10 +110,10 @@ function read_sdp_cstr(C, nvar::Int64)
     LSI = Any[]
     LSO = Any[]
     if haskey(C, "nlsi")
-        LSI=spzeros(C["nlsi"],nvar+1)
+        LSI=spzeros(C["nlsi"], nvar+1)
         for t in C["lsi_mat"]
-            i = t[2]
-            j = t[3]
+            i = t[3]
+            j = t[2]
             LSI[i,j] = t[1]
         end
         for k in 1:C["nlsi"]
@@ -176,7 +180,7 @@ function read_data(F::OrderedDict)
         F["constraints"] = read_constraint(F["type"],
                                            F["constraints"], X, nu)
     end
-    return PMOData(F)
+    return PMO.Data(F)
 end
 
 function parse(s::String)
@@ -184,7 +188,7 @@ function parse(s::String)
     read_data(F)
 end
 
-function readfile(file::String)
+function read(file::String)
     F = JSON.parsefile(file; dicttype=DataStructures.OrderedDict)
     read_data(F)
 end
@@ -192,6 +196,6 @@ end
 function readurl(url::String)
     p = HTTP.get(url)
     F = JSON.parse(String(p.body); dicttype=DataStructures.OrderedDict)
-    PMOData(F)
+    PMO.Data(F)
 end
 

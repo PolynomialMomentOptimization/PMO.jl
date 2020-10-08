@@ -1,7 +1,9 @@
 using LibGit2, UUIDs, JuliaDB
 
-export register, gettable, update, readdata
-    
+import Base: getindex
+export register, pmotable, update, getdata
+
+
 function git(cmd)
     insert!(cmd.exec,1,"git")
     run(pipeline(cmd, stdout=devnull, stderr=devnull))
@@ -47,7 +49,7 @@ function update()
     end
 end
 
-function add_data(file::String, F::PMOData)
+function add_data(file::String, F::PMO.Data)
     datapath = pull_data()
     datafile = joinpath("pmo", file*".json")
     i = 0
@@ -98,7 +100,7 @@ function update_registry()
     return datapath
 end
 
-function register(F::PMOData; file="", url::String="")
+function register(F::PMO.Data; file="", url::String="")
     u = uuid1()
     if file == ""
         datafile = string(u)
@@ -123,32 +125,45 @@ function register(F::PMOData; file="", url::String="")
 end
 
 
-function gettable(name::String="index-pmo")
-    JuliaDB.loadtable(joinpath(local_registry_path(), name*".csv"))
+function pmotable(name::String="index-pmo")
+    PMO.DataBase(JuliaDB.loadtable(joinpath(local_registry_path(), name*".csv")))
 end
+
 
 function read_uuid(t, uuid)
     url = filter(x-> x.uuid==uuid,t)[1][:url]
     readurl(url)
 end
 
-function readdata(t::JuliaDB.IndexedTables.IndexedTable, i::Int64)
+function getdata(name::String)
     n = length(PMO_RAW_DATA_URL)
-    file = joinpath(local_data_path(),"pmo",(t[i][:url])[n:end])
+    if isfile(name)
+        return read(name)
+    end
+    file = joinpath(local_data_path(),"pmo",name[n:end])
     if isfile(file)
-        readfile(file)
+        return read(file)
     else
         @warn "$file does not exist"
+        return nothing
     end
 end
 
-function readdata(t::JuliaDB.IndexedTables.IndexedTable, uuid::String)
-    n = length(PMO_RAW_DATA_URL)
-    url = filter(x-> x.uuid==uuid,t)[1][:url]
-    file = joinpath(local_data_path(),"pmo",url[n:end])
-    if isfile(file)
-        readfile(file)
-    else
-        @warn "$file does not exist"
+function Base.getindex(DB::PMO.DataBase, i::Int64)
+    getdata(DB.db[i][:url])
+end
+
+function Base.getindex(DB::PMO.DataBase, s::String)
+    L = filter(x-> match(Regex(s), x.name) !== nothing, DB.db)
+    [getdata(p[:url]) for p in L]
+end
+
+
+function Base.getindex(DB::PMO.DataBase, reg::Regex)
+    L = filter(x-> match(reg, x.name) !== nothing, DB.db)
+    R = Any[]
+    for p in L
+        push!(R, getdata(p[:url]))
     end
+    R
 end

@@ -2,30 +2,40 @@ using DynamicPolynomials
 using DataStructures
 
 import Base: setindex!, getindex, show
+import DynamicPolynomials: variables
 
-export pmo_pol, pmo_moment, pmo_sdp, constraints, objective, doc
+export pmo_pol, pmo_moment, pmo_sdp, constraints, objective, add_constraint
 
 """
  Polynomial Moment Optimization Data as an ordered dictionnary.
 """
-mutable struct PMOData
+mutable struct Data
     data::OrderedDict{String,Any}
 end
 
-function PMOData(F,s) PMOData(F) end
+mutable struct DataBase
+    db :: JuliaDB.IndexedTables.IndexedTable
+end
+    
+function PMO.Data(F,s) PMO.Data(F) end
 
-function Base.setindex!(p::PMOData, v, k::String)  p.data[k] = v end
-function Base.setindex!(p::PMOData, v, k::Symbol)  p.data[string(k)] = v end
-function Base.getindex(p::PMOData, s::String)  get(p.data, s, "") end
-function Base.getindex(p::PMOData, s::Symbol)  get(p.data, string(s), nothing) end
+function Base.setindex!(p::PMO.Data, v, k::String)  p.data[k] = v end
+function Base.setindex!(p::PMO.Data, v, k::Symbol)  p.data[string(k)] = v end
+function Base.getindex(p::PMO.Data, s::String)  get(p.data, s, "") end
+function Base.getindex(p::PMO.Data, s::Symbol)  get(p.data, string(s), nothing) end
 
-function Base.show(io::IO, p::PMOData)
+function Base.show(io::IO, p::PMO.Data)
     println(io,"Optimisation model:")
     for (k,v) in p.data
         println(io,"  ",k, " => ",v)
     end
     return io
 end
+
+function add_constraint(F::PMO.Data, p, s)
+    push!(F[:constraints].cstr, (p,s))
+end
+
 
 """
  Polynomial constraint as a polynomial, a set and the variables
@@ -35,7 +45,9 @@ mutable struct PolynomialCstr{T}
     var::Any
 end
 
-function PolynomialCstr(X) return PolynomialCstr([],X) end
+function PolynomialCstr(X)
+    return PolynomialCstr([],X)
+end
 
 function Base.push!(C::PolynomialCstr, p, s)
     push!(C.cstr, (p,s))
@@ -103,14 +115,15 @@ Construct a Polynomial Moment Optimization data  from
 
     - P vector of objective function or constraints (p, s) with p a polynomial and s a set
     - X variables of the polynomials.
+    - type in {"polynomial", "moment", "sdp"} specifies the type of optimization problem
 
 Example:
 --------
 
     X = @polyvar x y
-    data([(x^2*y^2+x*y, "inf"), (x^2+y^2-1,"<=0")], X)
+    pmodata([(x^2*y^2+x*y, "inf"), (x^2+y^2-1,"<=0")], X, "polynomial")
 """
-function pmodata(P::Vector, X, type::String)
+function pmo(P::Vector, X, type::String)
 
     F = OrderedDict{String,Any}(
         "type"=> type,
@@ -137,7 +150,7 @@ function pmodata(P::Vector, X, type::String)
     end
     F["version"]="0.0.1"
     F["uuid"]= string(uuid1())
-    return PMOData(F)
+    return PMO.Data(F)
 end
 
 
@@ -204,7 +217,7 @@ function sdp(P...)
     F["constraints"] = SDPCstr([LMI,LSI,LSO], n)
     F["version"] = "0.0.1"
     F["uuid"]= string(uuid1())
-    return PMOData(F)
+    return PMO.Data(F)
 end
 
 function sdp(P::Vector)
@@ -213,16 +226,19 @@ end
 
 pmo_sdp = sdp
         
-function constraints(F::PMOData)
+function constraints(F::PMO.Data)
     return getkey(F.data,"constraints",[])
 end
 
-function objective(F::PMOData)
+function objective(F::PMO.Data)
     return getkey(F.data,"objective",nothing)
 end
 
-
-function properties(P::PMOData)
+function DynamicPolynomials.variables(F::PMO.Data)
+    union(variables(F["objective"].obj), [variables(p[1]) for p in F["constraints"].cstr]...)
+end
+        
+function properties(P::PMO.Data)
     nv = length(P["variables"])
     no = 0;
     dgo = -1
@@ -250,19 +266,17 @@ function properties(P::PMOData)
     return [name, nv, no, dgo, nz, dgz, ns, dgs]
 end
 
-function Base.vec(F::PMOData)
-    if F[:objective] == nothing 
-        return [(c.ctr, c.set.val) for c in F["constraints"]]
+function Base.vec(F::PMO.Data)
+    if F["objective"] == nothing 
+        return [(c[1], c[2]) for c in F["constraints"].cstr]
     end
-    P = [(F["objective"].ctr, F["objective"].set.val)]
+    P = Any[(F[:objective].obj, F[:objective].set)]
     if F[:constraints] != nothing 
-        for c in F["constraints"]
-            push!(P, (c[1],c[2].val))
+        for c in F[:constraints].cstr
+            push!(P, (c[1], c[2]))
         end
     end
     return P
 end
 
-function doc(P::PMOData)
-    return P["doc"]
-end
+
