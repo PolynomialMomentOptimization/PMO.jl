@@ -140,7 +140,12 @@ function JSON.lower(c::SDPCstr)
     end
 
     M["nlmi"] = length(LDM)
-    M["msizes"] = json(LDM)
+    if length(LDM) == 1
+        M["msizes"] = LDM[1]
+    else
+        M["msizes"] = json(LDM)
+    end
+    
     if length(LMISY) != 0
         M["lmi_symat"] = LMISY
     end
@@ -148,19 +153,18 @@ function JSON.lower(c::SDPCstr)
         M["lmi_lrmat"] = LMILR
     end
 
-
     csi = c.cstr[2]
     LSI_mat = String[]
     LSI_vec = zeros(size(csi,1))
     
-    for i in 1:size(csi,1)
-        for j in 1:size(csi,2)
-            #k = ( j> c.nvar  ? 0 : j)
-            if csi[i,j] != 0
+    for i in 1:length(csi)
+        Li = csi[i]
+        for j in 1:length(Li)
+            if csi[i][j] != 0
                 if j > c.nvar
-                    LSI_vec[i] = csi[i,j]
+                    LSI_vec[i] = - Li[j]
                 else 
-                    push!(LSI_mat, json(Any[csi[i,j], j, i]))
+                    push!(LSI_mat, json(Any[Li[j], i, j]))
                 end
             end
         end
@@ -192,7 +196,7 @@ function JSON.json(io::IO, F::PMO.Data)
     print(io,s)
 end
 
-function JSON.print(F::PMO.Data)
+function PMO.json(F::PMO.Data)
     JSON.json(stdout,F)
 end
 
@@ -203,7 +207,7 @@ function JSON.print(file::String, F::PMO.Data)
 end
                 
 
-function save(file::String, F::PMO.Data)
+function PMO.save(file::String, F::PMO.Data)
     fd = open(file,"w")
     JSON.json(fd,F)
     close(fd)

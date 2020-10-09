@@ -68,7 +68,7 @@ end
 
 function read_sdp_cstr(C, nvar::Int64)
     LMI = Any[]
-    if C["nlmi"]== 1
+    if C["nlmi"] == 1
         push!(LMI,Any[spzeros(C["msizes"],C["msizes"]) for k in 1:nvar+1])
     else
         for i in 1:C["nlmi"]
@@ -93,14 +93,24 @@ function read_sdp_cstr(C, nvar::Int64)
             r = t[4]
             rk[[l,nv]] = max(r, get(rk,[l,nv],0))
         end
-        for (idx,r) in rk
-            l = idx[1]
-            k = idx[2]
-            LMI[l][k] = [spzeros(C["msizes"][l]) for i in 1:r]
+
+        if isa(C["msizes"], Vector)
+            for (idx,r) in rk
+                l = idx[1]
+                k = idx[2]
+                LMI[k][l] = [spzeros(C["msizes"][l]) for i in 1:r]
+            end
+        else
+            for (idx,r) in rk
+                l = idx[1]
+                k = idx[2]
+                setindex!(LMI[k], [spzeros(C["msizes"]) for i in 1:r], l)
+            end
         end
+        
         for t in C["lmi_lrmat"]
-            l = t[2]
-            nv = (t[3] == 0 ? nvar+1 : t[3])
+            l = t[3]
+            nv = (t[2] == 0 ? nvar+1 : t[2])
             i = t[4]
             j = t[5]
             LMI[l][nv][i][j] = t[1]
@@ -110,16 +120,15 @@ function read_sdp_cstr(C, nvar::Int64)
     LSI = Any[]
     LSO = Any[]
     if haskey(C, "nlsi")
-        LSI=spzeros(C["nlsi"], nvar+1)
+        LSI=[fill(0.0,nvar+1) for i in 1:C["nlsi"]]
         for t in C["lsi_mat"]
-            i = t[3]
-            j = t[2]
-            LSI[i,j] = t[1]
+            i = t[2]
+            j = t[3]
+            LSI[i][j] = t[1]
         end
-        for k in 1:C["nlsi"]
-            LSI[k,nvar+1] = - C["lsi_vec"][k]
+        for i in 1:C["nlsi"]
+            LSI[i][nvar+1] = - C["lsi_vec"][i]
         end
-
         LSO = C["lsi_op"]
     end
     

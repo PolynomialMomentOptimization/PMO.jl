@@ -121,7 +121,7 @@ Example:
 --------
 
     X = @polyvar x y
-    pmodata([(x^2*y^2+x*y, "inf"), (x^2+y^2-1,"<=0")], X, "polynomial")
+    pmo([(x^2*y^2+x*y, "inf"), (x^2+y^2-1,"<=0")], X, "polynomial")
 """
 function pmo(P::Vector, X, type::String)
 
@@ -154,26 +154,26 @@ function pmo(P::Vector, X, type::String)
 end
 
 
-polynomial(P::Vector, X) = pmodata(P,X,"polynomial")
+polynomial(P::Vector, X) = pmo(P,X,"polynomial")
 
 function polynomial(P...)
     X = PolyVar{true}[]
     for p in P
         X = union(X, variables(p[1]))
     end
-    pmodata([P...],X,"polynomial")
+    pmo([P...],X,"polynomial")
 end
 
 pmo_pol= polynomial
         
-moment(P::Vector, X) = pmodata(P, X, "moment")
+moment(P::Vector, X) = pmo(P, X, "moment")
 
 function moment(P...)
     X = PolyVar{true}[]
     for p in P
         X = union(X, variables(p[1]))
     end
-    pmodata([P...], X, "moment")
+    pmo([P...], X, "moment")
 end
 
 pmo_moment = moment
@@ -214,7 +214,7 @@ function sdp(P...)
             push!(LSO, 0)
         end
     end
-    F["constraints"] = SDPCstr([LMI,LSI,LSO], n)
+    F["constraints"] = SDPCstr([LMI,LSI,LSO], n, [], [])
     F["version"] = "0.0.1"
     F["uuid"]= string(uuid1())
     return PMO.Data(F)
