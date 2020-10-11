@@ -196,7 +196,7 @@ function JSON.json(io::IO, F::PMO.Data)
     print(io,s)
 end
 
-function PMO.json(F::PMO.Data)
+function PMO.write(F::PMO.Data)
     JSON.json(stdout,F)
 end
 
@@ -207,7 +207,7 @@ function JSON.print(file::String, F::PMO.Data)
 end
                 
 
-function PMO.save(file::String, F::PMO.Data)
+function PMO.write(file::String, F::PMO.Data)
     fd = open(file,"w")
     JSON.json(fd,F)
     close(fd)

@@ -59,7 +59,7 @@ function add_data(file::String, F::PMO.Data)
         datafile = joinpath("pmo", file*"."*string(i)*".json")
     end
 
-    PMO.save(joinpath(datapath,datafile),F)
+    PMO.write(joinpath(datapath,datafile),F)
     git(`-C $datapath add $datafile `)
     git(`-C $datapath commit -a -m "add $file.json" `)
     git(`-C $datapath push origin master`)
@@ -136,7 +136,7 @@ function read_uuid(t, uuid)
 end
 
 function getdata(name::String)
-    n = length(PMO_RAW_DATA_URL)
+    n = length(PMO_RAW_DATA_URL)+6
     if isfile(name)
         return read(name)
     end

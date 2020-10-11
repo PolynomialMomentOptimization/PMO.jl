@@ -21,9 +21,9 @@ F  = PMO.sdp(([1,2,3], "inf"),
 F["name"] = "My first example"
 F["doc"]  = "Two linear matrix inequalities, one linear scalar equality and one linear scalar inequality."
 
-PMO.save("tmp.json",F)
+PMO.write("tmp.json",F)
 G  = PMO.read("tmp.json")
-PMO.json(G)
+PMO.write(G)
 
 
 LMI1 = [Symmetric([2 1 0; 0 1 0; 0 0 0]),
@@ -43,6 +43,6 @@ F["doc"] =
     one LMI with one rank-1 matrix, 3 linear scalar constraints
     """
 
-PMO.save("tmp.json",F)
+PMO.write("tmp.json",F)
 G  = PMO.read("tmp.json")
-PMO.json(G)
+PMO.write(G)
