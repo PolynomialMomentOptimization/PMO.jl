@@ -1,7 +1,7 @@
 using LibGit2, UUIDs, JuliaDB
 
 import Base: getindex
-export register, pmotable, update, getdata
+export register, update, getdata
 
 
 function git(cmd)
@@ -124,8 +124,7 @@ function register(F::PMO.Data; file="", url::String="")
     return u, datafile 
 end
 
-
-function pmotable(name::String="index-pmo")
+function table(name::String="index-pmo")
     PMO.DataBase(JuliaDB.loadtable(joinpath(local_registry_path(), name*".csv")))
 end
 
