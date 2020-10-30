@@ -49,12 +49,49 @@ function update()
     end
 end
 
+function PMO.update(t, F::PMO.Data)
+    n = length(PMO.PMO_RAW_DATA_URL)+6
+    row = filter(r-> (r.uuid == F[:uuid]), t.db)
+    if length(row) == 0
+        @warn "uuid not found in database"
+        return
+    end
+    file = row[1][:url][n:end]
+    datapath = PMO.local_data_path()
+    datafile = joinpath(datapath,"pmo", file)
+    v = VersionNumber(F[:version])
+    F[:version] = string(VersionNumber(v.major,v.minor,v.patch+1))
+    PMO.write(datafile, F)
+    PMO.git(`-C $datapath commit -a -m "modify $file" `)
+    PMO.git(`-C $datapath push origin master`)
+    @info "PMO update data $file"
+end
+
+function PMO.rm(t, F::PMO.Data)
+    n = length(PMO.PMO_RAW_DATA_URL)+6
+
+    row = filter(r-> (r.uuid == F[:uuid]), t.db)
+    if length(row) != 0
+        file = row[1][:url][n:end]
+        datapath = PMO.local_data_path()
+        PMO.git(`-C $datapath rm pmo/$file `)
+        t.db = filter(r-> (r.uuid != F[:uuid]), t.db)
+        indexfile = joinpath(datapath,"registries/index-pmo.csv")
+        PMO.write(indexfile, t.db)
+        PMO.git(`-C $datapath commit -a -m "rm $file" `)
+        PMO.git(`-C $datapath push origin master`)
+        @info "PMO remove data $file"
+       
+    end
+end
+
+
 function add_data(file::String, F::PMO.Data)
     datapath = pull_data()
     datafile = joinpath("pmo", file*".json")
     i = 0
     while isfile(joinpath(datapath,datafile)) && i < 100
-        @info "PMO data file $datafile already exists"
+        @info "PMO data $datafile already exists"
         i += 1
         datafile = joinpath("pmo", file*"."*string(i)*".json")
     end
@@ -63,8 +100,7 @@ function add_data(file::String, F::PMO.Data)
     git(`-C $datapath add $datafile `)
     git(`-C $datapath commit -a -m "add $file.json" `)
     git(`-C $datapath push origin master`)
-    @info "PMO add data file $datafile"
-    @info "PMO update data"
+    @info "PMO add data $datafile"
     return datafile, datapath
 end
 
@@ -75,7 +111,7 @@ function rm_data(file::String)
         git(`-C $datapath rm $datafile`) 
         git(`-C $datapath commit -a -m "rm $file"`) 
         git(`-C $datapath push origin master`) 
-        @info "PMO remove data file \"pmo/"*file*".json\""
+        @info "PMO remove data file $file"
     end
     return nothing
 end
@@ -91,19 +127,9 @@ function add_registry(V::Vector, name::String="index-pmo")
     close(regist_io)
 end
 
-function update_registry()
-    datapath = local_data_path()
-    if ispath(datapath)
-        git(`-C $datapath pull`) 
-        @info "PMO update registries"
-    end
-    return datapath
-end
-
 function register(F::PMO.Data; file="", url::String="")
-    u = uuid1()
     if file == ""
-        datafile = string(u)
+        datafile = F[:uuid]*".json"
     else
         datafile = file
     end
@@ -114,36 +140,31 @@ function register(F::PMO.Data; file="", url::String="")
         dataurl = joinpath(url,datafile)
     end
     datapath = local_data_path()
-    add_registry([string(u), F["name"], dataurl] )
-    
+    add_registry([F["uuid"], F["name"], dataurl] )
     git(`-C $datapath commit -a -m "add to index $newfile"`) 
     git(`-C $datapath push origin master`) 
-    @info "PMO register $newfile"
+    @info "PMO register new data $newfile"
 
-    update_registry()
-    return u, datafile 
+    update()
+    return datafile 
 end
+
 
 function table(name::String="index-pmo")
     PMO.DataBase(JuliaDB.loadtable(joinpath(local_registry_path(), name*".csv")))
 end
 
 
-function read_uuid(t, uuid)
-    url = filter(x-> x.uuid==uuid,t)[1][:url]
-    readurl(url)
-end
-
 function getdata(name::String)
     n = length(PMO_RAW_DATA_URL)+6
     if isfile(name)
         return read(name)
     end
-    file = joinpath(local_data_path(),"pmo",name[n:end])
+    file = joinpath(local_data_path(),"pmo", name[n:end])
     if isfile(file)
         return read(file)
     else
-        @warn "$file does not exist"
+        @warn "file $file does not exist"
         return nothing
     end
 end
@@ -157,7 +178,6 @@ function Base.getindex(DB::PMO.DataBase, s::String)
     [getdata(p[:url]) for p in L]
 end
 
-
 function Base.getindex(DB::PMO.DataBase, reg::Regex)
     L = filter(x-> match(reg, x.name) !== nothing, DB.db)
     R = Any[]
@@ -166,3 +186,5 @@ function Base.getindex(DB::PMO.DataBase, reg::Regex)
     end
     R
 end
+
+
