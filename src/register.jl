@@ -50,15 +50,16 @@ function update()
 end
 
 function PMO.update(t, F::PMO.Data)
-    n = length(PMO.PMO_RAW_DATA_URL)+6
+
     row = filter(r-> (r.uuid == F[:uuid]), t.db)
     if length(row) == 0
         @warn "uuid not found in database"
         return
     end
+    n = length(PMO.PMO_RAW_DATA_URL)+7
     file = row[1][:url][n:end]
     datapath = PMO.local_data_path()
-    datafile = joinpath(datapath,"pmo", file)
+    datafile = joinpath(datapath,"json", file)
     v = VersionNumber(F[:version])
     F[:version] = string(VersionNumber(v.major,v.minor,v.patch+1))
     PMO.write(datafile, F)
@@ -68,13 +69,13 @@ function PMO.update(t, F::PMO.Data)
 end
 
 function PMO.rm(t, F::PMO.Data)
-    n = length(PMO.PMO_RAW_DATA_URL)+6
+    n = length(PMO.PMO_RAW_DATA_URL)+7
 
     row = filter(r-> (r.uuid == F[:uuid]), t.db)
     if length(row) != 0
         file = row[1][:url][n:end]
         datapath = PMO.local_data_path()
-        PMO.git(`-C $datapath rm pmo/$file `)
+        PMO.git(`-C $datapath rm json/$file `)
         t.db = filter(r-> (r.uuid != F[:uuid]), t.db)
         indexfile = joinpath(datapath,"registries/index-pmo.csv")
         PMO.write(indexfile, t.db)
@@ -88,12 +89,12 @@ end
 
 function add_data(file::String, F::PMO.Data)
     datapath = pull_data()
-    datafile = joinpath("pmo", file*".json")
+    datafile = joinpath("json", file*".json")
     i = 0
     while isfile(joinpath(datapath,datafile)) && i < 100
         @info "PMO data $datafile already exists"
         i += 1
-        datafile = joinpath("pmo", file*"."*string(i)*".json")
+        datafile = joinpath("json", file*"."*string(i)*".json")
     end
 
     PMO.write(joinpath(datapath,datafile),F)
@@ -106,7 +107,7 @@ end
 
 function rm_data(file::String)
     datapath = local_data_path()
-    datafile = joinpath(datapath,"pmo", file*".json")
+    datafile = joinpath(datapath,"json", file*".json")
     if isfile(datafile)
         git(`-C $datapath rm $datafile`) 
         git(`-C $datapath commit -a -m "rm $file"`) 
@@ -143,7 +144,7 @@ function register(F::PMO.Data; file="", url::String="")
     add_registry([F["uuid"], F["name"], dataurl] )
     git(`-C $datapath commit -a -m "add to index $newfile"`) 
     git(`-C $datapath push origin master`) 
-    @info "PMO register new data $newfile"
+    @info "PMO register data $newfile"
 
     update()
     return datafile 
@@ -156,11 +157,11 @@ end
 
 
 function getdata(name::String)
-    n = length(PMO_RAW_DATA_URL)+6
+    n = length(PMO_RAW_DATA_URL)+7
     if isfile(name)
         return read(name)
     end
-    file = joinpath(local_data_path(),"pmo", name[n:end])
+    file = joinpath(local_data_path(),"json", name[n:end])
     if isfile(file)
         return read(file)
     else
