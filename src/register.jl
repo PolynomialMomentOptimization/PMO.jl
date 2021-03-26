@@ -17,14 +17,14 @@ function local_registry_path()
     return joinpath(homedir(), ".julia", "PMO/data/registries")
 end
 
-function update_data()
+function init()
     datapath=local_data_path()
     if !ispath(datapath)
         LibGit2.clone(PMO_GIT_DATA_URL,local_data_path())
         @info "PMO clone "*PMO_GIT_DATA_URL
     else
         git(`-C $datapath pull`) 
-        @info "PMO pull data"
+        @info "PMO update data"
     end
     return datapath
 end
@@ -36,17 +36,21 @@ function pull_data()
         @info "PMO clone "*PMO_GIT_DATA_URL
     else
         git(`-C $datapath pull`) 
-        @info "PMO pull data"
+        @info "PMO update data"
     end
     return datapath
 end
 
 function update()
     datapath = local_data_path()
-    if ispath(datapath)
+    if !ispath(datapath)
+        LibGit2.clone(PMO_GIT_DATA_URL,local_data_path())
+        @info "PMO clone "*PMO_GIT_DATA_URL
+    else
         git(`-C $datapath pull`) 
         @info "PMO update data"
     end
+    return datapath
 end
 
 function PMO.update(t, F::PMO.Data)
