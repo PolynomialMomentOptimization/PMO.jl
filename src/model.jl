@@ -4,7 +4,7 @@ using DataStructures
 import Base: setindex!, getindex, show
 import DynamicPolynomials: variables
 
-export pmo_pol, pmo_moment, pmo_sdp, constraints, objective, add_constraint
+export data, pmo_pol, pmo_moment, pmo_sdp, constraints, objective, add_constraint
 
 """
  Polynomial Moment Optimization Data as an ordered dictionnary.
@@ -19,8 +19,21 @@ end
     
 function PMO.Data(F,s) PMO.Data(F) end
 
-function Base.setindex!(p::PMO.Data, v, k::String)  p.data[k] = v end
-function Base.setindex!(p::PMO.Data, v, k::Symbol)  p.data[string(k)] = v end
+function Base.setindex!(p::PMO.Data, v, k::String)
+    if v == ""
+        delete!(p.data,k)
+    else
+        p.data[k] = v
+    end
+end
+
+function Base.setindex!(p::PMO.Data, v, k::Symbol)
+    if v == nothing
+        delete!(p.data,string(k))
+    else
+        p.data[string(k)] = v
+    end
+end
 function Base.getindex(p::PMO.Data, s::String)  get(p.data, s, "") end
 function Base.getindex(p::PMO.Data, s::Symbol)  get(p.data, string(s), nothing) end
 
@@ -45,6 +58,7 @@ mutable struct PolynomialCstr{T}
     var::Any
 end
 
+
 function PolynomialCstr(X)
     return PolynomialCstr([],X)
 end
@@ -53,13 +67,31 @@ function Base.push!(C::PolynomialCstr, p, s)
     push!(C.cstr, (p,s))
 end
 
-#----------------------------------------------------------------------
+function Base.show(io::IO, C::PolynomialCstr)
+    print(io, "[ ") 
+    for i in 1:length(C.cstr)
+        c = C.cstr[i]
+        if i >1 print(io, ", ") end
+        print(io, c[1])
+        if typeof(c[2]) != String print(io," in") end
+        print(io, " ", c[2])
+    end
+    print(io," ]")
+    return io
+end
+
 mutable struct PolynomialObj{T}
     obj::T
     set::String
     var::Any
 end
 
+function Base.show(io::IO, O::PolynomialObj)
+    print(io, O.set, " ", O.obj)
+    return io
+end
+
+#----------------------------------------------------------------------
 """
  Moment constraint as a polynomial, a set and the variables
 """
@@ -71,6 +103,20 @@ end
 
 function MomentCstr(X,nu::Int64) return MomentCstr([],X,nu) end
 
+function Base.show(io::IO, C::MomentCstr)
+    print(io, "[ ") 
+    for i in 1:length(C.cstr)
+        c = C.cstr[i]
+        if i >1 print(io, ", ") end
+        print(io, c[1])
+        if typeof(c[2]) != String print(io," in") end
+        print(io, " * ", c[2])
+    end
+    print(io," ]")
+    return io
+end
+
+
 function Base.push!(C::MomentCstr, p, s)
     push!(C.cstr, (p,s))
 end
@@ -80,6 +126,12 @@ mutable struct MomentObj{T}
     set::String
     var::Any
 end
+
+function Base.show(io::IO, O::MomentObj)
+    print(io, O.set, " ", O.obj)
+    return io
+end
+
 
 """
  SDP  objective
@@ -121,9 +173,9 @@ Example:
 --------
 
     X = @polyvar x y
-    pmo([(x^2*y^2+x*y, "inf"), (x^2+y^2-1,"<=0")], X, "polynomial")
+    data([(x^2*y^2+x*y, "inf"), (x^2+y^2-1,"<=0")], X, "polynomial")
 """
-function pmo(P::Vector, X, type::String)
+function data(P::Vector, X, type::String = "polynomial")
 
     F = OrderedDict{String,Any}(
         "type"=> type,
@@ -145,7 +197,9 @@ function pmo(P::Vector, X, type::String)
         if p[2]=="inf" || p[2] =="sup"
             F["objective"] =  objective(p[1],p[2],X)
         else
-            push!(F["constraints"], p[1]*one(Polynomial{true,Int64}),p[2])
+            
+            push!(F["constraints"],
+                  p[1]*one(Polynomial{true,Int64}), p[2])
         end
     end
     F["version"]="0.0.1"
@@ -153,27 +207,36 @@ function pmo(P::Vector, X, type::String)
     return PMO.Data(F)
 end
 
-
-polynomial(P::Vector, X) = pmo(P,X,"polynomial")
+function data(P...; type = "polynomial", var=[])
+    if length(var)==0
+        var = PolyVar{true}[]
+        for p in P
+            var = union(var, variables(p[1]))
+        end
+    end
+    return data([P...],var,type)
+end
+    
+polynomial(P::Vector, X) = data(P,X,"polynomial")
 
 function polynomial(P...)
     X = PolyVar{true}[]
     for p in P
         X = union(X, variables(p[1]))
     end
-    pmo([P...],X,"polynomial")
+    data([P...],X,"polynomial")
 end
 
 pmo_pol= polynomial
         
-moment(P::Vector, X) = pmo(P, X, "moment")
+moment(P::Vector, X) = data(P, X, "moment")
 
 function moment(P...)
     X = PolyVar{true}[]
     for p in P
         X = union(X, variables(p[1]))
     end
-    pmo([P...], X, "moment")
+    data([P...], X, "moment")
 end
 
 pmo_moment = moment

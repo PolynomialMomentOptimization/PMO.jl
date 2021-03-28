@@ -85,7 +85,7 @@ function JSON.lower(C::MomentCstr)
         M["set"] = c[2]
         pol=c[1]
         M["moments"] = OrderedDict(
-            "coeftype" => string(eltype(pol[1].a)),
+            "coeftype" => string(eltype(coefficient(pol[1]))),
             "terms" => json_moment_terms(pol, C.var)
         )
         push!(R,M)
