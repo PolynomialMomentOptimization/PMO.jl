@@ -210,6 +210,10 @@ function Base.getindex(DB::PMO.DataBase, i::Int64)
     getdata(DB.db[i][:url])
 end
 
+function Base.getindex(DB::PMO.DataBase, I::UnitRange{Int64})
+    [getdata(DB.db[i][:url]) for i in I]
+end
+
 function Base.getindex(DB::PMO.DataBase, s::String)
     L = filter(x-> match(Regex(s), x.name) !== nothing, DB.db)
     [getdata(p[:url]) for p in L]
