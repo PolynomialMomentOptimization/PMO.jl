@@ -213,10 +213,10 @@ function PMO.write(file::String, F::PMO.Data)
     close(fd)
 end
 
-function PMO.write(file::String, t::JuliaDB.IndexedTable)
+function PMO.write(file::String, t::DataBase)
     fd = open(file,"w")
     println(fd,"\"uuid\",\"name\",\"url\"")
-    for r in t
+    for r in t.db
          println(fd,r[1],",",r[2],",",r[3])
     end
     close(fd)

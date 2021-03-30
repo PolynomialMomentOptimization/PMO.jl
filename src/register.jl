@@ -182,13 +182,17 @@ end
 register = register_data
 
 
-function table(name::String="index-pmo")
-    datapath=local_data_path()
-    if !ispath(datapath)
-        LibGit2.clone(PMO_GIT_DATA_URL,local_data_path())
-        @info "PMO clone "*PMO_GIT_DATA_URL
+function table(name::String="")
+    if name == ""
+        datapath=local_data_path()
+        if !ispath(datapath)
+            LibGit2.clone(PMO_GIT_DATA_URL,local_data_path())
+            @info "PMO clone "*PMO_GIT_DATA_URL
+        end
+        PMO.DataBase(JuliaDB.loadtable(joinpath(local_registry_path(), "index-pmo.csv")))
+    else
+        PMO.DataBase(JuliaDB.loadtable(name))
     end
-    PMO.DataBase(JuliaDB.loadtable(joinpath(local_registry_path(), name*".csv")))
 end
 
 
