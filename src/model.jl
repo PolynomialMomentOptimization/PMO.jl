@@ -341,7 +341,10 @@ function Base.vec(F::PMO.Data)
     if F["objective"] == nothing 
         return [(c[1], c[2]) for c in F["constraints"].cstr]
     end
-    P = Any[(F[:objective].obj, F[:objective].set)]
+    P = Any[]
+    if F[:objective] != nothing
+        push!(P, (F[:objective].obj, F[:objective].set))
+    end
     if F[:constraints] != nothing 
         for c in F[:constraints].cstr
             push!(P, (c[1], c[2]))
