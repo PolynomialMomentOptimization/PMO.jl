@@ -4,7 +4,7 @@ using DataStructures
 import Base: setindex!, getindex, show
 import DynamicPolynomials: variables
 
-export data, pmo_pol, pmo_moment, pmo_sdp, constraints, objective, add_constraint
+export data, pmo_pol, pmo_moment, pmo_sdp, constraints, objective, add_constraint, variables
 
 """
  Polynomial Moment Optimization Data as an ordered dictionnary.
@@ -297,8 +297,16 @@ function objective(F::PMO.Data)
     return getkey(F.data,"objective",nothing)
 end
 
+function DynamicPolynomials.variables(F::PolynomialObj)  return F.var  end
+function DynamicPolynomials.variables(F::PolynomialCstr) return F.var  end
+function DynamicPolynomials.variables(F::MomentObj)  return F.var end
+function DynamicPolynomials.variables(F::MomentCstr) return F.var end
+function DynamicPolynomials.variables(F::SDPObj)  return ["x"*string(i) for i in 1:length(F.obj)-1] end
+function DynamicPolynomials.variables(F::SDPCstr) return ["x"*string(i) for i in 1:F.nvar] end
+function DynamicPolynomials.variables(F::Nothing) return DynamicPolynomials.PolyVar{true}[] end
+
 function DynamicPolynomials.variables(F::PMO.Data)
-    union(variables(F["objective"].obj), [variables(p[1]) for p in F["constraints"].cstr]...)
+    union(variables(F[:objective]), variables(F[:constraints]))
 end
         
 function properties(P::PMO.Data)
@@ -341,5 +349,4 @@ function Base.vec(F::PMO.Data)
     end
     return P
 end
-
 
