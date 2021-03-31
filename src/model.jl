@@ -63,6 +63,15 @@ function PolynomialCstr(X)
     return PolynomialCstr([],X)
 end
 
+function Base.getindex(p::PolynomialCstr, i::Int64)  return p.cstr[i] end
+function Base.setindex!(p::PolynomialCstr, v, i::Int64)
+    if v == nothing
+        deleteat!(p.cstr,i)
+    else
+        p.cstr[i] = v
+    end
+end
+
 function Base.push!(C::PolynomialCstr, p, s)
     push!(C.cstr, (p,s))
 end
@@ -84,6 +93,14 @@ mutable struct PolynomialObj{T}
     obj::T
     set::String
     var::Any
+end
+
+function Base.getindex(p::PolynomialObj, i::Int64)
+    if i==1
+        return p.obj
+    else
+        return p.set
+    end
 end
 
 function Base.show(io::IO, O::PolynomialObj)
@@ -127,6 +144,14 @@ mutable struct MomentObj{T}
     var::Any
 end
 
+function Base.getindex(p::MomentObj, i::Int64)
+    if i==1
+        return p.obj
+    else
+        return p.set
+    end
+end
+
 function Base.show(io::IO, O::MomentObj)
     print(io, O.set, " ", O.obj)
     return io
@@ -138,6 +163,10 @@ end
 """
 mutable struct SDPObj{T}
     obj::Vector{T}
+end
+
+function Base.getindex(p::SDPObj, i::Int64)
+    return p.obj
 end
 
 """
