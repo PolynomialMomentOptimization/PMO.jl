@@ -121,12 +121,18 @@ function add_data(file::String, F::PMO.Data)
             datafile = file*"."*string(i)*".json"
         end
     end
-
-    PMO.write(joinpath(datapath,"json",datafile),F)
-    git(`-C $datapath add json/$datafile `)
-    git(`-C $datapath commit -a -m "add $datafile" `)
-    git(`-C $datapath push origin master`)
+    try 
+        PMO.write(joinpath(datapath,"json",datafile),F)
+        git(`-C $datapath add json/$datafile `)
+        git(`-C $datapath commit -a -m "add $datafile" `)
+        git(`-C $datapath push origin master`)
+    catch
+        rm(joinpath(datapath,"json",datafile)) 
+        @warn "git push failed; data not added"
+        return
+    end
     @info "PMO add data $datafile"
+
     return datafile, datapath
 end
 
@@ -134,9 +140,14 @@ function rm_data(file::String)
     datapath = local_data_path()
     datafile = joinpath(datapath,"json", file*".json")
     if isfile(datafile)
-        git(`-C $datapath rm $datafile`) 
-        git(`-C $datapath commit -a -m "rm $file"`) 
-        git(`-C $datapath push origin master`) 
+        try
+            git(`-C $datapath rm $datafile`) 
+            git(`-C $datapath commit -a -m "rm $file"`) 
+            git(`-C $datapath push origin master`)
+        catch
+            @warn "git push failed; data not removed"
+            return 
+        end
         @info "PMO remove data file $file"
     end
     return nothing
@@ -232,6 +243,10 @@ function Base.getindex(DB::PMO.DataBase, reg::Regex)
     R
 end
 
+function Base.getindex(DB::PMO.DataBase, s::Symbol)
+    select(DB.db,s)
+end
+
 function geturl(DB::PMO.DataBase, uuid::String)
     L = filter(x->  x.uuid == uuid, DB.db)
     return L[1].url
@@ -243,6 +258,10 @@ end
 
 function select(DB::PMO.DataBase, s::String)
     DataBase(filter(x-> match(Regex(s), x.name) !== nothing, DB.db))
+end
+
+function select(DB::PMO.DataBase, fct::Function)
+    DataBase(filter(x-> fct(x), DB.db))
 end
 
 function select(DB::PMO.DataBase, s::Symbol)

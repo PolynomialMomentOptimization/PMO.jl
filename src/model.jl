@@ -76,6 +76,14 @@ function Base.push!(C::PolynomialCstr, p, s)
     push!(C.cstr, (p,s))
 end
 
+function Base.iterate(C::PolynomialCstr, i::Int64=1)
+    iterate(C.cstr,i)
+end
+
+function Base.length(C::PolynomialCstr)
+    return length(C.cstr)
+end
+
 function Base.show(io::IO, C::PolynomialCstr)
     print(io, "[ ") 
     for i in 1:length(C.cstr)
@@ -137,6 +145,10 @@ end
 function Base.push!(C::MomentCstr, p, s)
     push!(C.cstr, (p,s))
 end
+
+function Base.iterate(C::MomentCstr, i::Int64=1)
+    iterate(C.cstr,i)
+end
     
 mutable struct MomentObj{T}
     obj::T
@@ -181,6 +193,10 @@ end
 
 function Base.push!(C::SDPCstr, p, s)
     push!(C.cstr, (p,s) )
+end
+
+function Base.iterate(C::SDPCstr, i::Int64=1)
+    iterate(C.cstr,i)
 end
 
 function objective(f, s, X)
