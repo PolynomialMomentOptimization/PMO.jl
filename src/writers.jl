@@ -28,8 +28,14 @@ function JSON.lower(C::PolynomialCstr)
         M = OrderedDict{String,Any}()
         M["set"] = c[2]
         pol=c[1]
+        coeftype = eltype(pol)
+        if coeftype == Any
+            coeftype = eltype(coefficients(pol))
+        else
+            pol = one(Polynomial{true,coeftype})*pol
+        end
         M["polynomial"] = OrderedDict(
-            "coeftype" => string(eltype(pol.a)),
+            "coeftype" => string(coeftype),
             "terms" => json_polynomial_terms(pol, C.var)
         )
         push!(R,M)
@@ -42,8 +48,14 @@ function JSON.lower(c::PolynomialObj)
     M = OrderedDict{String,Any}()
     M["set"] = c.set
     pol=c.obj
+    coeftype = eltype(pol)
+    if coeftype == Any
+        coeftype = eltype(coefficients(pol))
+    else
+        pol = one(Polynomial{true,coeftype})*pol
+    end
     M["polynomial"] = OrderedDict(
-        "coeftype" => string(eltype(pol.a)),
+        "coeftype" => string(coeftype),
         "terms" => json_polynomial_terms(pol, c.var)
     )
     return M
