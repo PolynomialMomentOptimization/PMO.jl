@@ -9,6 +9,7 @@ using LinearAlgebra, SparseArrays
 include("model.jl")
 include("readers.jl")
 include("writers.jl")
+include("database.jl")
 include("register.jl")
 
 const PMO_GIT_DATA_URL = "https://github.com/PolynomialMomentOptimization/data"
