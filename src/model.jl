@@ -276,12 +276,14 @@ pmo_pol= polynomial
         
 moment(P::Vector, X) = data(P, X, "moment")
 
-function moment(P...)
+function moment(P...; nms = length(P[1][1]))
     X = PolyVar{true}[]
     for p in P
         X = union(X, variables(p[1]))
     end
-    data([P...], X, "moment")
+    F = data([P...], X, "moment")
+    F[:nms] = nms
+    return F
 end
 
 pmo_moment = moment
@@ -346,14 +348,31 @@ function DynamicPolynomials.variables(F::PolynomialObj)  return F.var  end
 function DynamicPolynomials.variables(F::PolynomialCstr) return F.var  end
 function DynamicPolynomials.variables(F::MomentObj)  return F.var end
 function DynamicPolynomials.variables(F::MomentCstr) return F.var end
-function DynamicPolynomials.variables(F::SDPObj)  return ["x"*string(i) for i in 1:length(F.obj)-1] end
-function DynamicPolynomials.variables(F::SDPCstr) return ["x"*string(i) for i in 1:F.nvar] end
-function DynamicPolynomials.variables(F::Nothing) return DynamicPolynomials.PolyVar{true}[] end
-
+function DynamicPolynomials.variables(F::SDPObj)  
+    return ["x"*string(i) for i in 1:length(F.obj)-1]
+end
+function DynamicPolynomials.variables(F::SDPCstr)
+    return ["x"*string(i) for i in 1:F.nvar]
+end
+function DynamicPolynomials.variables(F::Nothing)
+    return DynamicPolynomials.PolyVar{true}[]
+end
 function DynamicPolynomials.variables(F::PMO.Data)
     union(variables(F[:objective]), variables(F[:constraints]))
 end
-        
+function DynamicPolynomials.variables(F::Array)
+    X = PolyVar{true}[]
+    for p in F
+        X = union(X, variables(p))
+    end
+    return X
+end
+function DynamicPolynomials.variables(x::T) where {T<:Number}
+    return PolyVar{true}[]
+end
+function DynamicPolynomials.variables(x::String) 
+    return PolyVar{true}[]
+end           
 function properties(P::PMO.Data)
     nv = length(P["variables"])
     no = 0;

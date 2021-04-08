@@ -36,23 +36,29 @@ function read_moment_cstr1(p,X,nu)
 
     c = p["moments"]["terms"][1][1]*one(Polynomial{true,Int64})
     pol = fill(zero(c), nu)
-
+    pol0 = zero(c)
     s = p["set"]
     for tm in p["moments"]["terms"]
         m = tm[1]
         k = tm[2]
-        if k != 0
-            if length(tm)>2
-                for i in 1:length(tm[3])
-                    if length(tm) >3
-                        m*= X[tm[4][i]]^tm[3][i]
-                    else
-                        m*= X[i]^tm[3][i]
-                    end
+
+        if length(tm)>2
+            for i in 1:length(tm[3])
+                if length(tm) >3
+                    m*= X[tm[4][i]]^tm[3][i]
+                else
+                    m*= X[i]^tm[3][i]
                 end
             end
-            pol[k] = pol[k]+m
         end
+        if k <= nu
+            pol[k] = pol[k]+m
+        else
+            pol0  = pol0 + m
+        end
+    end
+    if pol0 != zero(c)
+        push!(pol,pol0)
     end
     return  (pol,s)
 end
