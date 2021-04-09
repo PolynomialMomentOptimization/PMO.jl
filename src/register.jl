@@ -238,8 +238,8 @@ function push(DB::PMO.DataBase, F::PMO.Data; file = "")
     if F[:version] == nothing
         F[:version] = "0.0.1"
     end
-    if F[:author] == nothing
-        @warn "data[:author] not defined; data not pushed to database"
+    if F[:author] == nothing || F[:name] == nothing
+        @warn "data[:author] or data[:name] not defined; data not pushed to database"
         return 
     end
 
