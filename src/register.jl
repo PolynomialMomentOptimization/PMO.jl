@@ -29,6 +29,12 @@ function init()
     return datapath
 end
 
+function commit(message::String="new update")
+    datapath = local_data_path()
+    PMO.git(`-C $datapath commit -a -m "$message" `)
+    PMO.git(`-C $datapath push origin master`)
+end
+
 function update_git()
     datapath = local_data_path()
     if !ispath(datapath)
