@@ -162,9 +162,8 @@ function add_registry(V::Vector, name::String="index-pmo")
     registpath = local_registry_path()
     regist_io  = open(joinpath(registpath,name*".csv"),"a")
     print(regist_io,V[1])
-    for i in 2:length(V)
-        print(regist_io, ",", V[i])
-    end
+    print(regist_io, ",", replace(V[2],","=>""))
+    print(regist_io, ",", V[3])
     println(regist_io)
     close(regist_io)
 end
