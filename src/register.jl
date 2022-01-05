@@ -1,7 +1,7 @@
 using LibGit2, UUIDs, JuliaDB
 
 
-export register, init, update, getdata, push, select
+export register, init, update, getdata, push, select, update_data
 
 
 function git(cmd)
@@ -46,6 +46,8 @@ function update_git()
     end
     return datapath
 end
+
+function update_data() update_git() end
 
 function update(DB::PMO.DataBase)
     update_git()
@@ -161,7 +163,7 @@ end
 function add_registry(V::Vector, name::String="index-pmo")
     registpath = local_registry_path()
     regist_io  = open(joinpath(registpath,name*".csv"),"a")
-    print(regist_io,V[1])
+    print(regist_io, V[1])
     print(regist_io, ",", replace(V[2],","=>""))
     print(regist_io, ",", V[3])
     println(regist_io)
