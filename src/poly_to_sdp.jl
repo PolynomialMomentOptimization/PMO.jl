@@ -1,3 +1,5 @@
+export poly_to_sdp
+
 # Consider the POP problem: min f(x) s.t. h_1(x) = ... = h_s(x) = 0 , g_1(x) >= 0, ... , g_r(x) >= 0
 # We want to construct the Lasserre moment relaxation at order d of this problem:
 # min y^t*c s.t. y_0 = 1, M(y) is PDS, M(g_1 y) is PSD, ..., M(g_r y) is PSD, M(h_1 y) = 0, ... , M(h_s y) =0
