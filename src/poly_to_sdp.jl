@@ -12,35 +12,10 @@ export poly_to_sdp
 
 # The procedure extraction of the data from the JuMP model (inside the MomentTools one) was suggested by Benoit Legat
 
-#---------------------------------
-# Create a MomentTools model from the data 
-function create_model(C::Vector, X, d::Int64)
-    M = MOM.Model(X, d)
-    constraint_unitmass(M)
-    for c in C
-        if c[2] == "inf" || c[2] == "min"
-            MomentTools.objective(M, c[1], "inf")
-            wobj = true
-        elseif c[2] == "sup" || c[2] == "max"
-            MomentTools.objective(M, c[1], "sup")
-            wobj = true
-        elseif c[2] == "=0"
-            constraint_zero(M, c[1])
-        elseif c[2] == ">=0"
-            constraint_nneg(M, c[1])
-        elseif c[2] == "<=0"
-            constraint_nneg(M, -c[1])
-        elseif isa(c[2], AbstractVector)
-            constraint_nneg(M, c[1] - c[2][1])
-            constraint_nneg(M, -c[1] + c[2][2])
-        end
-    end
-    return M
-end
 #--------------------------------
 # Build the block diagonal matrix corresponding to the PSD constraints. The first block is the moment matrix, and the others are the localizing matrices
 function build_S(M)
-    C = all_constraints(M.model, Vector{AffExpr}, MathOptInterface.PositiveSemidefiniteConeTriangle)
+    C = all_constraints(M, Vector{AffExpr}, MathOptInterface.PositiveSemidefiniteConeTriangle)
     r = length(C)
     S = reshape_vector(jump_function(constraint_object(C[1])), shape(constraint_object(C[1])))
     if r > 1
@@ -56,7 +31,7 @@ end
 function PSD_matrices(M)
     S = build_S(M);
     l = length(S[:,1]);
-    var = all_variables(M.model);
+    var = all_variables(M);
     A = [zeros(l, l) for i in 1:length(var)];
     for k in 1:length(var)
         M = [get(S[i].terms, var[k], zero(Number)) for i in eachindex(S)]
@@ -66,16 +41,16 @@ function PSD_matrices(M)
 end
 # Construct the vector of moment coefficients associated to the objective function
 function build_c(M)
-    var = all_variables(M.model)
-    obj = objective_function(M.model).terms
+    var = all_variables(M)
+    obj = objective_function(M).terms
     c = [get(obj, var[i], zero(Number)) for i in eachindex(var)]
     return c
 end
 # Create the linear constraints associated with equations 
 function affine_constraints(M)
-    aff = all_constraints(M.model, AffExpr, MathOptInterface.EqualTo{Float64});
+    aff = all_constraints(M, AffExpr, MathOptInterface.EqualTo{Float64});
     l = length(aff)
-    var = all_variables(M.model)
+    var = all_variables(M)
     eq = [zeros(length(var)+1) for i in 1:l-1]
     for i in 2:l
         for k in 1:length(var)
@@ -88,10 +63,8 @@ function affine_constraints(M)
     return eq
 end
 #-----------------------
-# Function that outputs the Lasserre SDP relaxation at order d of the PMO Polynomial model pmo_model_poly, in the format of a PMO SDP model.
-function poly_to_sdp(pmo_model_poly, d)
-    # Create the MomentTools Model from the PMO model
-    M = create_model(vec(pmo_model_poly), variables(pmo_model_poly),d)
+# Function that outputs the Lasserre SDP relaxation at order d of the JuMO model M, in the format of a PMO SDP model.
+function poly_to_sdp(M, d)
     # Construct the block diagonal PSD matrix associated to this semidefinite relaxations from the inequalities in the model
     A = (PSD_matrices(M), ">=0")
     # Construct the affine constraints from the equations in the model

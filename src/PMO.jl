@@ -5,7 +5,6 @@ using JSON
 using JuliaDB, HTTP
 using UUIDs
 using LinearAlgebra, SparseArrays
-using MomentTools
 using BlockDiagonals
 using JuMP
 using MathOptInterface
