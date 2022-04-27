@@ -12,12 +12,12 @@ g2 = x
 h = 2*y^2-y
 
 
-F  = pmo_pol((o,"inf"),
+P  = pmo_pol((o,"inf"),
              (g,"<=0"),
              (g2-1, ">=0"),
              (h,"=0"))
 
-F["doc"]=
+P["doc"]=
 """
 This is a documentation text.
 Several lines 
@@ -25,9 +25,9 @@ Several lines
   - We have that
 
 """
-JSON.print(F)
-PMO.save("tmp.json",F)
-G  = PMO.readfile("tmp.json")
+JSON.print(P)
+PMO.write("tmp.json",P)
+G  = PMO.read("tmp.json")
 JSON.print(G)
 
 
@@ -40,15 +40,15 @@ g2 = x
 h1 = 2*y^2-y
 h2 = x^2+y*2.1*x*y
 
-F  = pmo_moment(([o1,o2],"inf"),
+M  = pmo_moment(([o1,o2],"inf"),
                 ([g1,0],">=0"),
                 ([0,g2], ">=0"),
                 ([h1, h2], "=0 *")
                 )
 
-JSON.print(F)
-PMO.save("tmp.json",F)
-G  = PMO.readfile("tmp.json")
+JSON.print(M)
+PMO.write("tmp.json",M)
+G  = PMO.read("tmp.json")
 JSON.print(G)
 
 
@@ -65,27 +65,27 @@ LMI2 = [Symmetric([1 0; 0 -1]),
         Symmetric([0 -1; -1 2])
         ]
 
-F  = PMO.sdp(([1,2,3], "inf"),
+S  = PMO.sdp(([1,2,3], "inf"),
              (LMI1,">=0"),
              (LMI2,">=0"),
              ([1.1,2,0,-4], "=0"),
              ([0,-1.2,3,-1],"<=0"),
              )
-F["name"] = "example0"
-F["doc"] =
+S["name"] = "example0"
+S["doc"] =
     """
     This is an example for testing purposes.
     Nothing special.
     """
-F["keywords"] =
+S["keywords"] =
     """
     #sdp
     #optimization
     #matrix
 
     """
-JSON.print(F)
-PMO.save("tmp.json",F)
-G  = PMO.readfile("tmp.json")
+JSON.print(S)
+PMO.write("tmp.json",S)
+G  = PMO.read("tmp.json")
 JSON.print(G)
 
