@@ -1,5 +1,4 @@
 using DynamicPolynomials, JSON
-#include("../src/PMO.jl")
 using PMO
 
 X = @polyvar x y
