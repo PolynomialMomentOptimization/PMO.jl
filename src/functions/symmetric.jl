@@ -1,3 +1,11 @@
+#= 
+ Generates symmetric homogeneous polynomials in n variables, which are 
+ Positive Semi Definite but not Sums of Squares.
+
+ Written by Sebatsian Dubus
+
+=#
+
 using DynamicPolynomials
 
 FCT["sym"] = function(n::Int64)
@@ -19,7 +27,7 @@ FCT["sym"] = function(n::Int64)
     "limit" form. It is non-negative in any number of variables and not a sum of
     squares already in the minimal case of n=4.
     """
-    Sym4[:name] = "SymmetricPSDnotSOS"
+    Sym4[:name] = "SymmetricPSDnotSOS"*string(n)
     Sym4[:author] = "Sebastian Debus"
 
     return Sym4 
