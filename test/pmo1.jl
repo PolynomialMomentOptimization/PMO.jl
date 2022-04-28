@@ -11,7 +11,7 @@ g2 = x
 h = 2*y^2-y
 
 
-P  = pmo_pol((o,"inf"),
+P  = PMO.polynomial((o,"inf"),
              (g,"<=0"),
              (g2-1, ">=0"),
              (h,"=0"))
@@ -39,7 +39,7 @@ g2 = x
 h1 = 2*y^2-y
 h2 = x^2+y*2.1*x*y
 
-M  = pmo_moment(([o1,o2],"inf"),
+M  = PMO.moment(([o1,o2],"inf"),
                 ([g1,0],">=0"),
                 ([0,g2], ">=0"),
                 ([h1, h2], "=0 *")

@@ -14,12 +14,15 @@ function table(name::String="")
     end
 end
 
+function database()
+    return PMO.table()
+end
 
 function getdata(name::String)
-    n = length(PMO_RAW_DATA_URL)+7
     if isfile(name)
         return read(name)
     end
+    n = length(PMO_RAW_DATA_URL)+7
     file = joinpath(local_data_path(),"json", name[n:end])
     if isfile(file)
         return read(file)
@@ -59,9 +62,8 @@ end
 
 function Base.getindex(DB::PMO.DataBase, fct::Function)
     L = filter(x-> fct(x), DB.db)
-    [ getdata(p[:url]) for p in L ]
+    return [ getdata(p[:url]) for p in L ]
 end
-
 
 function Base.length(DB::PMO.DataBase)
     length(DB.db)
@@ -74,6 +76,8 @@ end
 function Base.iterate(DB::PMO.DataBase, i::Tuple{Base.OneTo{Int64},Int64} = (Base.OneTo(length(DB)),1))
     return iterate(DB.db,i)
 end
+
+
 
 function geturl(DB::PMO.DataBase, uuid::String)
     L = filter(x->  x.uuid == uuid, DB.db)

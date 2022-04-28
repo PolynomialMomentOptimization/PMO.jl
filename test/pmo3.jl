@@ -9,13 +9,13 @@ M21 = [1 0; 0 -1]
 M22 = [0 3; 3 0 ]
 M20 = [0 -1; -1 2]
 
-F  = pmo_sdp(([1,2,3], "inf"),
+F  = PMO.sdp(([1,2,3], "inf"),
              ([M11, 0, M13],">=0"),
              ([M21, M22, 0, M20],">=0")
              )
 F["name"] = "My first example"
 JSON.print(F)
-PMO.save("tmp.json",F)
-G  = PMO.readfile("tmp.json")
+PMO.write("tmp.json",F)
+G  = PMO.read("tmp.json")
 
 JSON.print(G)

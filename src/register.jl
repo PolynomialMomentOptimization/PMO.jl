@@ -115,6 +115,10 @@ function PMO.rm(t, F::PMO.Data)
     end
 end
 
+function PMO.rm(F::PMO.Data)
+    PMO.rm(PMO.table(),F)
+end
+
 function add_data(file::String, F::PMO.Data)
     datapath = update_git()
     datafile = file
@@ -172,7 +176,17 @@ end
 
 function register_data(F::PMO.Data; file="", url::String="")
     if file == ""
-        datafile = F[:uuid]*".json"
+        if F[:name] == nothing 
+            datafile = F[:uuid]*".json"
+        else
+            datafile = lowercase(F[:name])*".json"
+            datafile = replace(datafile, " "=>"_")
+            datafile = replace(datafile, "/"=>"_")
+            datafile = replace(datafile, "\\"=>"_")
+            datafile = replace(datafile, "^"=>"_")
+            datafile = replace(datafile, ":"=>"_")
+            datafile = replace(datafile, ";"=>"_")
+        end
     else
         if endswith(file, ".json")
             datafile = file
@@ -198,6 +212,8 @@ function register_data(F::PMO.Data; file="", url::String="")
     update_git()
     return [F["uuid"], datafile, dataurl]
 end
+
+
 
 register = register_data
 

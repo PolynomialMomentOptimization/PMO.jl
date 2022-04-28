@@ -12,13 +12,13 @@ g2 = x
 h1 = 2*y^2-y
 h2 = x^2+y*2.1*x*y
 
-F  = pmo_moment(([o1,o2],"inf"),
+F  = PMO.moment(([o1,o2],"inf"),
                 ([g1,0],">=0"),
                 ([0,g2],">=0"),
                 ([h1, h2],[1.,"=0"])
                 )
 
 JSON.print(F)
-PMO.save("tmp.json",F)
-G  = PMO.readfile("tmp.json")
+PMO.write("tmp.json",F)
+G  = PMO.read("tmp.json")
 PMO.print(G)

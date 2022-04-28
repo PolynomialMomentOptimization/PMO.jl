@@ -1,6 +1,6 @@
 using JSON;
-#using PMO
-include("../src/PMO.jl")
+using PMO
+
 
 using LinearAlgebra
 
@@ -20,7 +20,8 @@ F["doc"] =
     """
     one LMI with one rank-1 matrix, 3 linear constraints
     """
+
 JSON.print(F)
-PMO.save("tmp.json",F)
-G  = PMO.readfile("tmp.json")
+PMO.write("tmp.json",F)
+G  = PMO.read("tmp.json")
 JSON.print(G)
