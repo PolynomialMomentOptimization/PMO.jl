@@ -19,6 +19,8 @@ F  = PMO.moment(([o1,o2],"inf"),
                 )
 
 JSON.print(F)
+println()
 PMO.write("tmp.json",F)
 G  = PMO.read("tmp.json")
 PMO.print(G)
+println()

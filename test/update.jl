@@ -9,9 +9,7 @@ Motz[:name] = "Motzkin bounded in B2"
 Motz[:author] = "My Name"
 PMO.register(Motz)
 
-
-t = PMO.database()
-P = t[end]
+P = PMO.database()[end]
 P[:version] = "0.0.2"
 
 PMO.push(P)

@@ -35,6 +35,12 @@ end
 function Base.getindex(DB::PMO.DataBase, i::Int64)
     getdata(DB.db[i][:url])
 end
+
+function database(i::Int64)
+    return Base.getindex(PMO.table(),i)
+end
+
+
 import Base: getindex, iterate, collect
 
 
@@ -42,9 +48,18 @@ function Base.getindex(DB::PMO.DataBase, I::UnitRange{Int64})
     [getdata(DB.db[i][:url]) for i in I]
 end
 
+function database(I::UnitRange{Int64})
+    return Base.getindex(PMO.table(),I)
+end
+
+
 function Base.getindex(DB::PMO.DataBase, s::String)
     L = filter(x-> match(Regex(s,"i"), x.name) !== nothing, DB.db)
     [getdata(p[:url]) for p in L]
+end
+
+function database(s::String)
+    return Base.getindex(PMO.table(),s)
 end
 
 function Base.getindex(DB::PMO.DataBase, reg::Regex)
@@ -56,9 +71,19 @@ function Base.getindex(DB::PMO.DataBase, reg::Regex)
     R
 end
 
+function database(reg::Regex)
+    return Base.getindex(PMO.table(),reg)
+end
+
 function Base.getindex(DB::PMO.DataBase, s::Symbol)
     select(DB.db,s)
 end
+
+function database(s::Symbol)
+    return Base.getindex(PMO.table(),s)
+end
+
+
 
 function Base.getindex(DB::PMO.DataBase, fct::Function)
     L = filter(x-> fct(x), DB.db)

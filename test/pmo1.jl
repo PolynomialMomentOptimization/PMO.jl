@@ -49,7 +49,7 @@ JSON.print(M)
 PMO.write("tmp.json",M)
 G  = PMO.read("tmp.json")
 JSON.print(G)
-
+println()
 
 using LinearAlgebra
 
@@ -87,4 +87,4 @@ JSON.print(S)
 PMO.write("tmp.json",S)
 G  = PMO.read("tmp.json")
 JSON.print(G)
-
+println()
