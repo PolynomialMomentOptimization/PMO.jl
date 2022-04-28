@@ -288,3 +288,6 @@ function push(DB::PMO.DataBase, F::PMO.Data; file = "")
 
 end
 
+function push(F::PMO.Data; file = "")
+    push(PMO.database(),F, file = file)
+end
